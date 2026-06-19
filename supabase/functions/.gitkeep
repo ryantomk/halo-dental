@@ -1,0 +1,4 @@
+# Edge Functions land here in a later phase:
+#   notify-new-booking      (on_appointment_insert trigger)
+#   notify-booking-status   (on_appointment_status_update trigger)
+# per technical spec Section 11.

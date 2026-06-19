@@ -1,0 +1,4 @@
+# Supabase CLI project config — links this repo to a Supabase project for
+# `supabase db push` / `supabase migration` workflows (technical spec
+# Section 15: "Supabase environments").
+project_id = "halo-dental"

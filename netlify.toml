@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Required so Next.js SSR/ISR routes run on Netlify's edge runtime
+# rather than being forced into a static export.

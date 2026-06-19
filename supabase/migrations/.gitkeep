@@ -1,0 +1,4 @@
+# Schema migration (clinics, doctors, services, appointments, patients,
+# testimonials, blog_posts, gallery_items, staff_users, audit_logs,
+# site_settings + RLS policies + triggers) lands here in Phase 2, as
+# numbered SQL files, per technical spec Sections 10–11.
