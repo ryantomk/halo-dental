@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { defaultLocale } from "@/lib/i18n";
+import { defaultLocale, locales, localeNames, type Locale } from "@/lib/i18n";
 
 const NAV_LINKS = [
   { key: "home", path: "/" },
@@ -15,6 +15,52 @@ const NAV_LINKS = [
   { key: "gallery", path: "/gallery" },
   { key: "contact", path: "/contact" },
 ] as const;
+
+const linkClasses =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-midnight";
+
+// EN / മലയാളം toggle — switches locale while staying on the same page.
+// Shared between the desktop row and the mobile panel so both stay in sync.
+function LanguageToggle({
+  currentLocale,
+  localelessPath,
+  className,
+}: {
+  currentLocale: Locale;
+  localelessPath: string;
+  className?: string;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Language"
+      className={cn("inline-flex items-center gap-0.5 rounded-full border border-white/15 bg-white/5 p-1", className)}
+    >
+      {locales.map((loc) => {
+        const isCurrent = loc === currentLocale;
+        const targetPrefix = loc === defaultLocale ? "" : `/${loc}`;
+
+        return (
+          <Link
+            key={loc}
+            href={localelessPath === "/" ? targetPrefix || "/" : `${targetPrefix}${localelessPath}`}
+            hrefLang={loc}
+            lang={loc}
+            aria-current={isCurrent ? "true" : undefined}
+            aria-label={`Switch to ${localeNames[loc]}`}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+              linkClasses,
+              isCurrent ? "bg-brand-gold text-brand-charcoal" : "text-white/70 hover:text-white"
+            )}
+          >
+            {loc === "en" ? "EN" : localeNames[loc]}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Header() {
   const t = useTranslations("nav");
@@ -68,9 +114,6 @@ export default function Header() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen]);
 
-  const linkClasses =
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-midnight";
-
   return (
     <header
       className={cn(
@@ -121,7 +164,9 @@ export default function Header() {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <LanguageToggle currentLocale={locale} localelessPath={localelessPath} className="hidden lg:inline-flex" />
+
           <Link
             href={href("/contact")}
             className={cn(
@@ -169,6 +214,10 @@ export default function Header() {
               ))}
             </ul>
           </nav>
+
+          <div className="mt-4 flex justify-center">
+            <LanguageToggle currentLocale={locale} localelessPath={localelessPath} />
+          </div>
 
           <Link
             href={href("/contact")}
