@@ -4,12 +4,13 @@ const withNextIntl = createNextIntlPlugin("./lib/i18n-request.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "export",
+
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
-        // Supabase Storage public bucket URLs — tighten to the exact
-        // project hostname once the Supabase project is created.
         hostname: "*.supabase.co",
       },
     ],
