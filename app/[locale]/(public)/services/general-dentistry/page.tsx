@@ -57,18 +57,18 @@ const CHECKUP_STEPS = [
   { title: "Examination", description: "We take a close look at your teeth, gums and bite to spot anything that needs attention." },
   { title: "Oral health assessment", description: "We check for early signs of decay, gum disease or other issues, supported by digital X-rays when needed." },
   { title: "Cleaning, if required", description: "Plaque and tartar build-up is gently removed, leaving your teeth feeling noticeably cleaner." },
-  { title: "Treatment recommendations", description: "If anything needs further treatment, we'll explain your options clearly, with no pressure to decide on the spot." },
+  { title: "Treatment recommendations", description: "If anything needs further treatment, We&rsquo;ll explain your options clearly, with no pressure to decide on the spot." },
 ];
 
 const WHY_CHECKUPS_MATTER = [
   { title: "Detect decay early", description: "Before it needs anything more than a simple filling." },
-  { title: "Gum health monitoring", description: "Catching early gum disease while it's still easily treatable." },
+  { title: "Gum health monitoring", description: "Catching early gum disease while It&rsquo;s still easily treatable." },
   { title: "Oral hygiene guidance", description: "Practical tips tailored to your teeth and habits." },
   { title: "Long-term prevention", description: "Fewer surprises, and fewer emergency visits." },
 ];
 
 const WHY_CHOOSE = [
-  { title: "Patient-first care", description: "We explain what's happening and why, before recommending any treatment.", icon: HeartHandshake },
+  { title: "Patient-first care", description: "We explain What&rsquo;s happening and why, before recommending any treatment.", icon: HeartHandshake },
   { title: "Modern digital dentistry", description: "Digital X-rays and modern equipment support a precise, comfortable visit.", icon: ScanLine },
   { title: "Family-friendly environment", description: "A calm, welcoming clinic suited to patients of every age.", icon: Sofa },
   { title: "Preventive approach", description: "Regular care planned to keep small issues from becoming bigger ones.", icon: CalendarCheck },
@@ -83,17 +83,17 @@ const FAQS = [
   {
     question: "Are dental cleanings painful?",
     answer:
-      "Routine cleanings are generally comfortable, with at most some mild sensitivity if it's been a while since your last visit or your gums are a little inflamed. Most patients find it a quick, easy part of the appointment.",
+      "Routine cleanings are generally comfortable, with at most some mild sensitivity if It&rsquo;s been a while since your last visit or your gums are a little inflamed. Most patients find it a quick, easy part of the appointment.",
   },
   {
     question: "What happens during a routine check-up?",
     answer:
-      "We examine your teeth and gums, check for any signs of decay or other issues, and clean your teeth if needed. We'll also talk you through anything we notice and what, if anything, needs further treatment.",
+      "We examine your teeth and gums, check for any signs of decay or other issues, and clean your teeth if needed. We&rsquo;ll also talk you through anything we notice and what, if anything, needs further treatment.",
   },
   {
     question: "When should children first visit a dentist?",
     answer:
-      "It's generally recommended that children have their first dental visit by their first birthday, or within six months of their first tooth appearing. Early visits help children get comfortable with the dentist and let us catch any issues early.",
+      "It&rsquo;s generally recommended that children have their first dental visit by their first birthday, or within six months of their first tooth appearing. Early visits help children get comfortable with the dentist and let us catch any issues early.",
   },
   {
     question: "How can I prevent cavities?",
@@ -177,7 +177,7 @@ export default function Page() {
           <p className="mt-4 text-base leading-relaxed text-brand-charcoal/70">
             Regular visits matter more than they might seem to. Many dental issues — from early
             decay to gum disease — develop slowly and painlessly at first, which means they&rsquo;re
-            often easiest to treat well before you'd notice anything yourself.
+            often easiest to treat well before you&apos;d notice anything yourself.
           </p>
         </div>
       </section>

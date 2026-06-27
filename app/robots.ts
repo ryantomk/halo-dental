@@ -1,2 +1,14 @@
-// TODO: Generate robots.txt; disallow /admin, allow everything else (technical spec Section 9).
-export {};
+import type { MetadataRoute } from "next";
+
+export default function robots(): MetadataRoute.Robots {
+return {
+rules: [
+{
+userAgent: "*",
+allow: "/",
+disallow: "/admin",
+},
+],
+sitemap: "https://halodental.in/sitemap.xml",
+};
+}
