@@ -22,11 +22,28 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Smile Makeovers in Angadipuram, Malappuram | Halo Dental",
-  description:
-    "Smile makeover treatments including veneers, whitening and cosmetic dentistry at Halo Dental Cosmetic & Orthodontic Centre, Angadipuram, Malappuram.",
-};
+import { defaultLocale } from "@/lib/i18n";
+import { constructMetadata, generateBreadcrumbJsonLd, generateServiceJsonLd } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const { locale } = params;
+  return constructMetadata({
+    title:
+      locale === "ml"
+        ? "സ്മൈൽ മേക്കോവറുകൾ | ഹാലോ ഡെന്റൽ ക്ലിനിക്ക് അങ്ങാടിപ്പുറം, മലപ്പുറം"
+        : "Smile Makeovers in Angadipuram, Malappuram | Halo Dental",
+    description:
+      locale === "ml"
+        ? "വെനീറുകൾ, വൈറ്റനിംഗ്, അലൈൻമെന്റ് എന്നിവ സമന്വയിപ്പിച്ചുകൊണ്ടുള്ള സ്മൈൽ മേക്കോവർ ചികിത്സ അങ്ങാടിപ്പുറത്തെ ഹാലോ ഡെന്റലിൽ ഡോ. ഹസീബിന്റെ നേതൃത്വത്തിൽ."
+        : "Comprehensive smile makeover treatments combining veneers, whitening, alignment, and cosmetic bonding at Halo Dental in Angadipuram, Malappuram.",
+    path: "/services/smile-makeovers",
+    locale,
+  });
+}
 
 const PHONE_TEL = "tel:+918547085403";
 const WHATSAPP_URL =
@@ -130,7 +147,30 @@ const faqJsonLd = {
   })),
 };
 
-export default function Page() {
+import { setRequestLocale } from "next-intl/server";
+
+export default function Page({
+  params,
+}: {
+  params: { locale: string };
+}) {
+  const { locale } = params;
+  setRequestLocale(locale);
+  const prefix = locale === "en" ? "" : `/${locale}`;
+
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: locale === "ml" ? "ഹോം" : "Home", url: prefix || "/" },
+    { name: locale === "ml" ? "ചികിത്സകൾ" : "Services", url: `${prefix}/services` },
+    { name: locale === "ml" ? "സ്മൈൽ മേക്കോവറുകൾ" : "Smile Makeovers", url: `${prefix}/services/smile-makeovers` },
+  ]);
+
+  const serviceJsonLd = generateServiceJsonLd({
+    name: "Smile Makeovers",
+    description: "A tailored aesthetic dental plan harmonizing teeth alignment, color, and symmetry at Halo Dental in Angadipuram.",
+    slug: "smile-makeovers",
+    category: "CosmeticDentistry",
+  });
+
   return (
     <main>
       {/* Hero */}
@@ -139,13 +179,13 @@ export default function Page() {
           <nav aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/60">
               <li>
-                <Link href="/" className="transition-colors hover:text-white">
+                <Link href={prefix || "/"} className="transition-colors hover:text-white">
                   Home
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
               <li>
-                <Link href="/services" className="transition-colors hover:text-white">
+                <Link href={`${prefix}/services`} className="transition-colors hover:text-white">
                   Services
                 </Link>
               </li>
@@ -166,7 +206,7 @@ export default function Page() {
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/contact"
+              href={`${prefix}/booking`}
               className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-brand-gold px-5 py-2.5 text-[15px] font-medium text-brand-charcoal transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-midnight sm:w-auto"
             >
               Book appointment
@@ -409,7 +449,7 @@ export default function Page() {
               WhatsApp booking
             </a>
             <Link
-              href="/contact"
+              href={`${prefix}/booking`}
               className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-white/20 bg-white/5 px-5 py-2.5 text-[15px] font-medium text-white transition-colors hover:border-brand-gold hover:bg-white/10 hover:text-brand-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-midnight sm:w-auto"
             >
               Book appointment
@@ -423,6 +463,14 @@ export default function Page() {
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
     </main>
   );

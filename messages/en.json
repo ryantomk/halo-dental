@@ -12,5 +12,330 @@
     "book": "Book appointment",
     "call": "Call us",
     "whatsapp": "WhatsApp chat"
+  },
+  "header": {
+    "language": "Language",
+    "switchLanguage": "Switch to {name}",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "brand": "Halo Dental"
+  },
+  "footer": {
+    "tagline": "Cosmetic & orthodontic dental care led by Dr. Haseeb in Angadipuram, Malappuram, Kerala.",
+    "contactTitle": "Contact & Location",
+    "quickLinksTitle": "Quick Links",
+    "connectTitle": "Connect With Us",
+    "address": "Near Soundharya Silks, Angadipuram, Malappuram, Kerala",
+    "hours": "Daily, 9:00 AM – 8:00 PM",
+    "onlineBooking": "Online Appointment Booking",
+    "socialDescription": "Follow our clinic for oral healthcare tips, patient smile stories, and clinic updates.",
+    "bilingualCareTitle": "Bilingual Care",
+    "bilingualCareDesc": "Consultations available in English & മലയാളം.",
+    "allRightsReserved": "Halo Dental Cosmetic & Orthodontic Centre. All rights reserved.",
+    "privacyPolicy": "Privacy Policy",
+    "contact": "Contact",
+    "instagramAria": "Halo Dental on Instagram",
+    "whatsappAria": "Halo Dental on WhatsApp"
+  },
+  "hero": {
+    "locationBadge": "Angadipuram · Malappuram · Kerala",
+    "titleMain": "Smile makeovers and orthodontic care,",
+    "titleHighlight": "crafted around you",
+    "description": "From porcelain veneers to clear aligners, Dr. Haseeb and the team at Halo Dental design every treatment plan around your aesthetic goals and oral health — pairing modern digital dentistry with a calm, patient-first approach.",
+    "bookCta": "Book Appointment",
+    "whatsappCta": "WhatsApp Us",
+    "hours": "Open Daily: 9:00 AM – 8:00 PM",
+    "surgeon": "Led by Dr. Haseeb (Chief Dental Surgeon)",
+    "before": "Before",
+    "after": "After",
+    "beforeAlt": "Demonstration of teeth alignment before treatment",
+    "afterAlt": "Demonstration of teeth alignment after treatment",
+    "previewBadge": "Consultation & Assessment",
+    "previewTitle": "See your smile transformed",
+    "previewDesc": "Personalized treatment plans tailored to your face and comfort.",
+    "checkAvailability": "Check Availability"
+  },
+  "trustStrip": {
+    "hoursTitle": "Open 7 Days a Week",
+    "hoursDesc": "Daily hours from 9:00 AM to 8:00 PM for scheduled & urgent care",
+    "treatmentsTitle": "11 Specialised Treatments",
+    "treatmentsDesc": "Cosmetic makeovers, orthodontics, and restorative dentistry in one clinic",
+    "doctorTitle": "Doctor-Led Consultations",
+    "doctorDesc": "Every plan personally evaluated by Chief Dental Surgeon Dr. Haseeb",
+    "bilingualTitle": "Bilingual Patient Care",
+    "bilingualDesc": "Consultations clearly explained in English & മലയാളം"
+  },
+  "about": {
+    "badge": "About Halo Dental",
+    "heading": "Care led by Dr. Haseeb",
+    "description": "At Halo Dental Cosmetic & Orthodontic Centre in Angadipuram, Dr. Haseeb leads every treatment plan with an emphasis on clarity, precision, and patient comfort. Whether you are seeking a complete smile transformation, orthodontic alignment, or gentle restorative care, we ensure every visit feels considered and never rushed.",
+    "drHaseeb": "Dr. Haseeb",
+    "chiefSurgeon": "Chief Dental Surgeon",
+    "clinicLocation": "Halo Dental · Angadipuram",
+    "leadershipTitle": "Clinical Leadership",
+    "leadershipDesc": "Direct clinical evaluation & personalized treatment planning for every patient.",
+    "patientFirst": "Patient First",
+    "patientFirstDesc": "Calm, considered consultations",
+    "highlight1": "Comprehensive digital smile planning",
+    "highlight2": "Calm, patient-focused consultations",
+    "highlight3": "Clear treatment options & transparent discussions",
+    "highlight4": "Orthodontics & restorative care under one roof",
+    "stat1Value": "7 Days",
+    "stat1Label": "Open daily from 9 AM to 8 PM",
+    "stat2Value": "11",
+    "stat2Label": "Specialised dental treatments",
+    "stat3Value": "2",
+    "stat3Label": "English & മലയാളം spoken",
+    "bookConsultation": "Book Consultation",
+    "learnMore": "Learn more about our clinic"
+  },
+  "services": {
+    "badge": "Comprehensive Dental Care",
+    "heading": "Specialised services for your smile",
+    "description": "From preventive family check-ups to comprehensive orthodontic and cosmetic makeovers, every procedure is conducted with patient-first precision.",
+    "treatmentDetails": "Treatment details",
+    "book": "Book",
+    "exploreAll": "Explore all 11 dental treatments",
+    "breadcrumbHome": "Home",
+    "breadcrumbServices": "Services",
+    "pageHeading": "Our dental services",
+    "pageDescription": "From a routine check-up to a complete smile makeover, every treatment at Halo Dental Cosmetic & Orthodontic Centre in Angadipuram, Malappuram is planned around you.",
+    "closingTitle": "Not sure which treatment is right for you?",
+    "closingDesc": "Book a consultation and Dr. Haseeb will help you find the right plan.",
+    "items": {
+      "smile-makeovers": {
+        "name": "Smile Makeovers",
+        "category": "Cosmetic Dentistry",
+        "description": "A tailored aesthetic plan harmonizing teeth alignment, color, and symmetry."
+      },
+      "clear-aligners": {
+        "name": "Clear Aligners",
+        "category": "Orthodontics",
+        "description": "Virtually invisible, removable aligners designed for discreet teeth straightening."
+      },
+      "dental-implants": {
+        "name": "Dental Implants",
+        "category": "Implants & Restorative",
+        "description": "Permanent titanium and ceramic replacements designed to restore full chewing and aesthetics."
+      },
+      "root-canal-treatment": {
+        "name": "Root Canal Treatment",
+        "category": "Endodontics",
+        "description": "Modern, gentle endodontic care to alleviate pain and preserve your natural tooth."
+      },
+      "teeth-whitening": {
+        "name": "Teeth Whitening",
+        "category": "Cosmetic Dentistry",
+        "description": "In-clinic professional whitening lifting everyday coffee, tea, and aging stains."
+      },
+      "veneers": {
+        "name": "Porcelain Veneers",
+        "category": "Cosmetic Dentistry",
+        "description": "Handcrafted porcelain facings correcting chips, minor gaps, and deep discolorations."
+      },
+      "orthodontics": {
+        "name": "Orthodontics & Braces",
+        "category": "Orthodontics",
+        "description": "Custom alignment systems correcting crowding, spacing, and bite irregularities."
+      },
+      "general-dentistry": {
+        "name": "General & Preventive Care",
+        "category": "General Dentistry",
+        "description": "Routine check-ups, ultrasonic hygiene cleanings, and proactive oral healthcare."
+      },
+      "pediatric-dentistry": {
+        "name": "Pediatric Dentistry",
+        "category": "Children's Dental Care",
+        "description": "Patient, friendly dental check-ups and preventative care for children and teens."
+      },
+      "crowns-bridges": {
+        "name": "Crowns & Fixed Bridges",
+        "category": "Restorative Dentistry",
+        "description": "Precision-milled ceramic crowns to reinforce damaged teeth or bridge gaps seamlessly."
+      },
+      "digital-diagnostics": {
+        "name": "Digital Radiography & Diagnostics",
+        "category": "Diagnostics",
+        "description": "Low-radiation digital imaging enabling precise, transparent treatment discussions."
+      }
+    }
+  },
+  "whyChoose": {
+    "badge": "The Halo Dental Difference",
+    "heading": "Why patients trust us with their smiles",
+    "description": "Thoughtful dental healthcare in Angadipuram built on genuine doctor-patient communication and clinical dedication.",
+    "reason1Title": "Patient-First Consultation",
+    "reason1Desc": "We take the time to understand what you want to achieve, thoroughly explaining every step with no rushed decisions or high-pressure upselling.",
+    "reason2Title": "Rigorous Hygiene & Care",
+    "reason2Desc": "Hospital-grade instrument sterilization and modern clinical protocols ensure your safety, comfort, and peace of mind during every appointment.",
+    "reason3Title": "Extended 7-Day Availability",
+    "reason3Desc": "Open Monday through Sunday from 9:00 AM to 8:00 PM in Angadipuram, making it simple to schedule around your work, school, and family routines.",
+    "reason4Title": "Clear Bilingual Communication",
+    "reason4Desc": "Every procedure, recovery timeline, and price estimate is explained clearly in both English and മലയാളം so you always feel informed.",
+    "ctaButton": "Schedule your consultation"
+  },
+  "showcase": {
+    "badge": "Treatment Showcase",
+    "heading": "Real transformations, visible results",
+    "description": "Compare before and after alignment demonstration to see the transformative potential of orthodontic and cosmetic dentistry.",
+    "ctaButton": "Start your smile transformation",
+    "before": "Before",
+    "after": "After",
+    "sliderInstruction": "Drag slider or use arrow keys to compare smile transformation demonstration.",
+    "sliderAria": "Before and after transformation slider"
+  },
+  "testimonials": {
+    "badge": "Patient Experiences",
+    "heading": "What our patients say",
+    "description": "A look at how personalized cosmetic and orthodontic care transformed our patients' confidence.",
+    "ratingAria": "Rated {rating} out of 5 stars",
+    "prevSlide": "Previous testimonial",
+    "nextSlide": "Next testimonial",
+    "slideTabAria": "Go to testimonial {index} by {name}",
+    "items": [
+      {
+        "name": "Fathima K.",
+        "treatment": "Smile Makeover",
+        "quote": "I'd put off fixing my smile for years out of nerves, but Dr. Haseeb walked me through every step before we started. The result still doesn't feel real — I catch myself smiling in photos again."
+      },
+      {
+        "name": "Arjun M.",
+        "treatment": "Clear Aligners",
+        "quote": "Barely anyone at work noticed I was wearing aligners, which is exactly what I wanted. Comfortable, easy to keep clean, and my teeth are visibly straighter after just a few months."
+      },
+      {
+        "name": "Sarah T.",
+        "treatment": "Dental Implant",
+        "quote": "I was anxious about the implant procedure, but the team made it painless and explained the healing process clearly. Eating and speaking normally again has been such a relief."
+      },
+      {
+        "name": "Rahul P.",
+        "treatment": "Teeth Whitening",
+        "quote": "Remarkable difference after just a single session. The procedure was comfortable and the team explained all the aftercare clearly. Highly recommend Halo Dental."
+      }
+    ]
+  },
+  "faq": {
+    "badge": "Questions & Answers",
+    "heading": "Frequently asked questions",
+    "description": "Clear information on our dental treatments, appointment scheduling, and clinical procedures.",
+    "anotherQuestion": "Have another question?",
+    "receptionDaily": "Our clinical reception team is here to assist you daily.",
+    "callReception": "Call Reception",
+    "whatsapp": "WhatsApp",
+    "items": [
+      {
+        "question": "How often should I visit the clinic for a dental check-up?",
+        "answer": "Most adults and children benefit from a routine examination and hygiene cleaning every six months. Regular visits allow Dr. Haseeb to monitor enamel health, check gum condition, and address minor concerns before they require intensive treatment."
+      },
+      {
+        "question": "How do clear aligners compare to traditional braces?",
+        "answer": "Both systems are clinically proven to align teeth and correct malocclusions. Clear aligners are virtually invisible, custom-milled, and removable for eating and brushing. Traditional or ceramic braces are fixed and may be recommended for certain complex skeletal corrections. During your consultation, we evaluate your bite to determine the ideal option."
+      },
+      {
+        "question": "Is professional teeth whitening safe for enamel?",
+        "answer": "Yes, professional in-clinic whitening carried out under dental supervision uses pH-balanced, calibrated formulations that lift organic stains without damaging tooth structure. Mild, transient sensitivity may occur in the first 24 to 48 hours, which resolves quickly."
+      },
+      {
+        "question": "What is the lifespan of a dental implant?",
+        "answer": "With diligent daily oral hygiene and regular preventive check-ups, dental implants are designed to last for several decades or a lifetime. The biocompatible titanium post integrates securely with the jawbone, providing the functional stability of a natural tooth root."
+      },
+      {
+        "question": "Does modern root canal treatment hurt?",
+        "answer": "With modern localized anesthesia and digital rotary endodontics, root canal procedures are comfortable and comparable to receiving a standard dental filling. The procedure is designed to alleviate the pain caused by inner tooth infection, not cause it."
+      },
+      {
+        "question": "What steps should I take in a dental emergency?",
+        "answer": "Contact our clinic immediately at +91 85470 85403. For a knocked-out permanent tooth, keep it moist (immersed in clean milk or saliva) and avoid touching the root. For severe toothache, rinse gently with warm water and avoid applying aspirin directly to the gums."
+      },
+      {
+        "question": "How long does a full smile makeover take?",
+        "answer": "The duration depends on your personalized treatment plan. A focused cosmetic enhancement combining whitening and minor composite bonding may take one to two visits, whereas comprehensive treatments involving aligners, veneers, or implants are structured over several weeks to months with clear milestones."
+      },
+      {
+        "question": "Do I need a consultation before starting treatment?",
+        "answer": "Yes. Every procedure begins with an initial consultation where Dr. Haseeb examines your oral health, discusses your goals, and presents clear treatment alternatives and estimates before any work begins."
+      }
+    ]
+  },
+  "finalCta": {
+    "badge": "Online & In-Clinic Appointments",
+    "heading": "Ready to begin your smile journey?",
+    "description": "Schedule your personal consultation with Dr. Haseeb at Halo Dental in Angadipuram. We take the time to listen to your goals, examine your teeth, and outline clear options before any treatment begins.",
+    "bookOnline": "Book Consultation Online",
+    "messageWhatsapp": "Message on WhatsApp",
+    "call": "Call: +91 85470 85403",
+    "hours": "Daily 9:00 AM – 8:00 PM",
+    "location": "Angadipuram, Malappuram",
+    "bilingual": "Bilingual Consultations (English & മലയാളം)"
+  },
+  "floating": {
+    "whatsappTooltip": "Chat on WhatsApp",
+    "whatsappAria": "Chat with Halo Dental on WhatsApp",
+    "bookingText": "Book Consultation",
+    "bookingAria": "Book a dental appointment"
+  },
+  "booking": {
+    "pageBadge": "Online Consultation",
+    "pageHeading": "Book an Appointment",
+    "pageDescription": "Select a dental procedure and pick your preferred consultation date and slot. Our Angadipuram reception team will contact you to verify.",
+    "formTitle": "Schedule an Appointment",
+    "clinicBranch": "Angadipuram",
+    "formDescription": "Choose your dental procedure and preferred consultation time. Our reception will confirm your slot.",
+    "noticeTitle": "Booking Notice",
+    "selectServiceLabel": "Select Dental Service *",
+    "dateLabel": "Preferred Date *",
+    "timeLabel": "Preferred Time *",
+    "nameLabel": "Full Name *",
+    "namePlaceholder": "e.g. Rahul Nair",
+    "phoneLabel": "Phone Number *",
+    "phonePlaceholder": "+91 85470 85403",
+    "emailLabel": "Email Address (Optional)",
+    "emailPlaceholder": "name@example.com",
+    "emailHelper": "We will send your consultation details to this address if provided.",
+    "notesLabel": "Symptoms or Notes (Optional)",
+    "notesPlaceholder": "Tell us about any specific dental pain, aesthetic concern, or medical conditions...",
+    "submitBtn": "Confirm Appointment Request",
+    "submittingBtn": "Confirming Appointment Request...",
+    "privacyNote": "Your personal health information is kept strictly confidential and protected.",
+    "pickDateFirst": "Pick date first...",
+    "closedOnSundays": "Closed on Sundays",
+    "checkingAvailability": "Checking availability...",
+    "noSlotsAvailable": "No slots available",
+    "selectTimeSlot": "-- Select a time slot --",
+    "reserved": "Reserved",
+    "sundayWarning": "Halo Dental is closed on Sundays. Please select a date from Monday to Saturday (09:00 AM – 08:00 PM).",
+    "verifyingSlots": "Verifying real-time slot availability with clinic schedule...",
+    "slotsAvailable": "{count} slots available for {date}",
+    "allSlotsReserved": "All slots fully reserved for this date. Please pick another date.",
+    "slotDuration": "30-min consultation slots",
+    "quickSelect": "Quick Select Available Slot",
+    "successBadge": "Request Received — Pending Verification",
+    "successTitle": "Booking Request Received!",
+    "successDesc": "Thank you for scheduling with Halo Dental. Our clinic reception in Angadipuram will review your requested slot and contact you shortly.",
+    "referenceCode": "Booking Reference Code",
+    "copy": "Copy",
+    "copied": "Copied",
+    "service": "Service",
+    "date": "Date",
+    "time": "Time",
+    "patientName": "Patient Name",
+    "phone": "Contact Phone",
+    "confirmWhatsApp": "Confirm via WhatsApp",
+    "callClinic": "Call +91 85470 85403",
+    "bookAnother": "Book Another Appointment",
+    "unavailableTitle": "Online Booking Temporarily Unavailable",
+    "unavailableDesc": "We are currently synchronizing our clinic schedule. Please contact Halo Dental reception directly to reserve your slot.",
+    "errors": {
+      "selectService": "Please select a dental service.",
+      "selectDate": "Please select an appointment date.",
+      "sunday": "The clinic is closed on Sundays. Please select a date from Monday to Saturday.",
+      "selectTime": "Please select an available appointment time.",
+      "slotOccupied": "The chosen time slot is already reserved. Please pick another available time.",
+      "genericError": "Unable to submit booking right now. Please call our clinic directly at +91 85470 85403.",
+      "nameRequired": "Name must be at least 2 characters.",
+      "phoneRequired": "Please provide a valid contact phone number.",
+      "emailInvalid": "Please provide a valid email address."
+    }
   }
 }

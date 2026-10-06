@@ -1,16 +1,33 @@
-import type { Metadata } from "next";
+import { requireAdminSession } from "@/lib/admin/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import TestimonialsClient, { type TestimonialRecord } from "@/components/admin/TestimonialsClient";
 
-// TODO: Build the Testimonial moderation queue (admin-only; approve/reject, light editing).
-// See halo-dental-technical-specification.md, Section 4 (Page structure).
-
-export const metadata: Metadata = {
-  title: "Halo Dental Cosmetic & Orthodontic Centre",
+export const metadata = {
+  title: "Testimonial Moderation | Halo Dental Staff Portal",
 };
 
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminTestimonialsPage() {
+  await requireAdminSession();
+  const adminClient = createAdminClient();
+
+  const [testimonialsRes, servicesRes] = await Promise.all([
+    adminClient
+      .from("testimonials")
+      .select("*, services(name_en)")
+      .order("created_at", { ascending: false }),
+    adminClient
+      .from("services")
+      .select("id, name_en")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+  ]);
+
   return (
-    <main>
-      {/* Scaffolded in Phase 1 — content built in a later phase */}
-    </main>
+    <TestimonialsClient
+      initialTestimonials={(testimonialsRes.data as unknown as TestimonialRecord[]) || []}
+      services={servicesRes.data || []}
+    />
   );
 }

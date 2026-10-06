@@ -11,11 +11,28 @@ import {
   Utensils,
 } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Dental Implants in Angadipuram, Malappuram | Halo Dental",
-  description:
-    "Replace a missing tooth with a secure, natural-looking dental implant at Halo Dental Cosmetic & Orthodontic Centre in Angadipuram, Malappuram, Kerala.",
-};
+import { defaultLocale } from "@/lib/i18n";
+import { constructMetadata, generateBreadcrumbJsonLd, generateServiceJsonLd } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const { locale } = params;
+  return constructMetadata({
+    title:
+      locale === "ml"
+        ? "ഡെന്റൽ ഇംപ്ലാന്റുകൾ | ഹാലോ ഡെന്റൽ ക്ലിനിക്ക് അങ്ങാടിപ്പുറം, മലപ്പുറം"
+        : "Dental Implants in Angadipuram, Malappuram | Halo Dental",
+    description:
+      locale === "ml"
+        ? "നഷ്ടപ്പെട്ട പല്ലുകൾക്ക് പകരം സ്വാഭാവിക ഉറപ്പും ഭംഗിയും നൽകുന്ന ഡെന്റൽ ഇംപ്ലാന്റ് ചികിത്സ അങ്ങാടിപ്പുറത്തെ ഹാലോ ഡെന്റലിൽ ഡോ. ഹസീബിന്റെ നേതൃത്വത്തിൽ."
+        : "Replace missing teeth with secure, natural-looking dental implants at Halo Dental Cosmetic & Orthodontic Centre in Angadipuram, Malappuram, Kerala.",
+    path: "/services/dental-implants",
+    locale,
+  });
+}
 
 const PHONE_TEL = "tel:+918547085403";
 const WHATSAPP_URL =
@@ -97,7 +114,30 @@ const faqJsonLd = {
   })),
 };
 
-export default function Page() {
+import { setRequestLocale } from "next-intl/server";
+
+export default function Page({
+  params,
+}: {
+  params: { locale: string };
+}) {
+  const { locale } = params;
+  setRequestLocale(locale);
+  const prefix = locale === "en" ? "" : `/${locale}`;
+
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: locale === "ml" ? "ഹോം" : "Home", url: prefix || "/" },
+    { name: locale === "ml" ? "ചികിത്സകൾ" : "Services", url: `${prefix}/services` },
+    { name: locale === "ml" ? "ഡെന്റൽ ഇംപ്ലാന്റുകൾ" : "Dental Implants", url: `${prefix}/services/dental-implants` },
+  ]);
+
+  const serviceJsonLd = generateServiceJsonLd({
+    name: "Dental Implants",
+    description: "Permanent titanium and ceramic replacements designed to restore full chewing and natural smile aesthetics at Halo Dental in Angadipuram.",
+    slug: "dental-implants",
+    category: "ImplantDentistry",
+  });
+
   return (
     <main>
       {/* Hero */}
@@ -106,13 +146,13 @@ export default function Page() {
           <nav aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/60">
               <li>
-                <Link href="/" className="transition-colors hover:text-white">
+                <Link href={prefix || "/"} className="transition-colors hover:text-white">
                   Home
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
               <li>
-                <Link href="/services" className="transition-colors hover:text-white">
+                <Link href={`${prefix}/services`} className="transition-colors hover:text-white">
                   Services
                 </Link>
               </li>
@@ -132,7 +172,7 @@ export default function Page() {
           </p>
 
           <Link
-            href="/contact"
+            href={`${prefix}/booking`}
             className="mt-8 inline-flex items-center gap-1.5 rounded-md bg-brand-gold px-5 py-2.5 text-[15px] font-medium text-brand-charcoal transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-midnight"
           >
             Book appointment
@@ -307,6 +347,14 @@ export default function Page() {
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
     </main>
   );

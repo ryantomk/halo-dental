@@ -1,16 +1,22 @@
-import type { Metadata } from "next";
+import { requireAdminSession } from "@/lib/admin/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import ServicesClient from "@/components/admin/ServicesClient";
+import type { ServiceData } from "@/components/admin/ServiceEditorModal";
 
-// TODO: Build the Services & pricing CRUD editor (bilingual fields, image upload, publish toggle, drag-to-reorder).
-// See halo-dental-technical-specification.md, Section 4 (Page structure).
-
-export const metadata: Metadata = {
-  title: "Halo Dental Cosmetic & Orthodontic Centre",
+export const metadata = {
+  title: "Clinical Services Management | Halo Dental Staff Portal",
 };
 
-export default function Page() {
-  return (
-    <main>
-      {/* Scaffolded in Phase 1 — content built in a later phase */}
-    </main>
-  );
+export const dynamic = "force-dynamic";
+
+export default async function AdminServicesPage() {
+  await requireAdminSession();
+  const adminClient = createAdminClient();
+
+  const { data: services } = await adminClient
+    .from("services")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  return <ServicesClient initialServices={(services as unknown as ServiceData[]) || []} />;
 }

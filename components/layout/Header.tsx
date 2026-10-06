@@ -13,14 +13,14 @@ const NAV_LINKS = [
   { key: "about", path: "/about" },
   { key: "services", path: "/services" },
   { key: "gallery", path: "/gallery" },
+  { key: "faq", path: "/faq" },
+  { key: "blog", path: "/blog" },
   { key: "contact", path: "/contact" },
 ] as const;
 
 const linkClasses =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-midnight";
 
-// EN / മലയാളം toggle — switches locale while staying on the same page.
-// Shared between the desktop row and the mobile panel so both stay in sync.
 function LanguageToggle({
   currentLocale,
   localelessPath,
@@ -30,28 +30,31 @@ function LanguageToggle({
   localelessPath: string;
   className?: string;
 }) {
+  const tHeader = useTranslations("header");
+
   return (
     <div
       role="group"
-      aria-label="Language"
+      aria-label={tHeader("language")}
       className={cn("inline-flex items-center gap-0.5 rounded-full border border-white/15 bg-white/5 p-1", className)}
     >
       {locales.map((loc) => {
         const isCurrent = loc === currentLocale;
         const targetPrefix = loc === defaultLocale ? "" : `/${loc}`;
+        const targetHref = localelessPath === "/" ? (targetPrefix || "/") : `${targetPrefix}${localelessPath}`;
 
         return (
           <Link
             key={loc}
-            href={localelessPath === "/" ? targetPrefix || "/" : `${targetPrefix}${localelessPath}`}
+            href={targetHref}
             hrefLang={loc}
             lang={loc}
             aria-current={isCurrent ? "true" : undefined}
-            aria-label={`Switch to ${localeNames[loc]}`}
+            aria-label={tHeader("switchLanguage", { name: localeNames[loc] })}
             className={cn(
               "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
               linkClasses,
-              isCurrent ? "bg-brand-gold text-brand-charcoal" : "text-white/70 hover:text-white"
+              isCurrent ? "bg-brand-gold text-brand-charcoal font-semibold" : "text-white/70 hover:text-white"
             )}
           >
             {loc === "en" ? "EN" : localeNames[loc]}
@@ -65,14 +68,12 @@ function LanguageToggle({
 export default function Header() {
   const t = useTranslations("nav");
   const tCta = useTranslations("cta");
+  const tHeader = useTranslations("header");
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // middleware.ts uses localePrefix: "as-needed" — English has no prefix,
-  // Malayalam is served under "/ml". Deriving it here from the pathname
-  // keeps every link correct without depending on next-intl's navigation
-  // helpers, which aren't set up elsewhere in this project yet.
+  // Derive current locale from pathname (English = defaultLocale "", Malayalam = "/ml")
   const locale = pathname.startsWith("/ml") ? "ml" : defaultLocale;
   const prefix = locale === defaultLocale ? "" : `/${locale}`;
   const localelessPath =
@@ -82,8 +83,6 @@ export default function Header() {
   const isActive = (path: string) =>
     path === "/" ? localelessPath === "/" : localelessPath.startsWith(path);
 
-  // Subtle elevation once the page scrolls — keeps the header from feeling
-  // flat against busy hero imagery without drawing attention to itself.
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
     onScroll();
@@ -91,12 +90,12 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close the mobile menu on navigation.
+  // Close the mobile menu on navigation
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
 
-  // Lock background scroll while the mobile menu is open.
+  // Lock background scroll while the mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
@@ -104,7 +103,7 @@ export default function Header() {
     };
   }, [isOpen]);
 
-  // Escape closes the mobile menu.
+  // Escape key closes the mobile menu
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -123,7 +122,8 @@ export default function Header() {
           : "border-transparent bg-brand-midnight"
       )}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
+        {/* Brand logo & title */}
         <Link href={href("/")} className={cn("flex items-center gap-2.5 rounded-md", linkClasses)}>
           <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false" className="h-7 w-7 flex-shrink-0">
             <circle
@@ -139,19 +139,20 @@ export default function Header() {
             />
           </svg>
           <span className="font-display text-xl leading-none tracking-tight sm:text-2xl">
-            <span className="text-brand-gold">Halo</span> <span className="text-white">Dental</span>
+            <span className="text-brand-gold font-bold">Halo</span> <span className="text-white">Dental</span>
           </span>
         </Link>
 
+        {/* Desktop Primary Navigation */}
         <nav aria-label="Primary" className="hidden lg:flex">
-          <ul className="flex items-center gap-8">
+          <ul className="flex items-center gap-6 xl:gap-7">
             {NAV_LINKS.map((link) => (
               <li key={link.path}>
                 <Link
                   href={href(link.path)}
                   aria-current={isActive(link.path) ? "page" : undefined}
                   className={cn(
-                    "relative py-1 text-[15px] font-medium text-white/85 transition-colors hover:text-brand-gold",
+                    "relative py-1 text-[14px] xl:text-[15px] font-medium text-white/85 transition-colors hover:text-brand-gold",
                     linkClasses,
                     isActive(link.path) &&
                       "text-white after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:bg-brand-gold"
@@ -164,38 +165,42 @@ export default function Header() {
           </ul>
         </nav>
 
+        {/* Right CTA & Controls */}
         <div className="flex items-center gap-3">
-          <LanguageToggle currentLocale={locale} localelessPath={localelessPath} className="hidden lg:inline-flex" />
+          <LanguageToggle currentLocale={locale} localelessPath={localelessPath} className="hidden sm:inline-flex" />
 
+          {/* Primary booking button points directly to /booking */}
           <Link
-            href={href("/contact")}
+            href={href("/booking")}
             className={cn(
-              "hidden rounded-md bg-brand-gold px-5 py-2.5 text-[15px] font-medium text-brand-charcoal transition-opacity hover:opacity-90 lg:inline-flex",
+              "hidden rounded-md bg-brand-gold px-4 py-2 text-sm xl:px-5 xl:py-2.5 xl:text-[15px] font-semibold text-brand-charcoal transition-all hover:bg-brand-gold/90 hover:shadow-md sm:inline-flex",
               linkClasses
             )}
           >
             {tCta("book")}
           </Link>
 
+          {/* Mobile hamburger menu button */}
           <button
             type="button"
             onClick={() => setIsOpen((open) => !open)}
             aria-expanded={isOpen}
             aria-controls="mobile-menu"
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-            className={cn("inline-flex items-center justify-center rounded-md p-2 text-white lg:hidden", linkClasses)}
+            aria-label={isOpen ? tHeader("closeMenu") : tHeader("openMenu")}
+            className={cn("inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-white/10 lg:hidden", linkClasses)}
           >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {isOpen ? <X className="h-6 w-6 text-brand-gold" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
+      {/* Mobile navigation drawer */}
       {isOpen && (
         <div
           id="mobile-menu"
-          className="absolute inset-x-0 top-full border-b border-white/10 bg-brand-midnight px-4 pb-6 pt-2 shadow-lg shadow-black/20 lg:hidden"
+          className="absolute inset-x-0 top-full border-b border-white/10 bg-brand-midnight/98 px-4 pb-6 pt-3 shadow-2xl backdrop-blur-md lg:hidden"
         >
-          <nav aria-label="Primary">
+          <nav aria-label="Mobile Primary">
             <ul className="flex flex-col gap-1">
               {NAV_LINKS.map((link) => (
                 <li key={link.path}>
@@ -203,9 +208,9 @@ export default function Header() {
                     href={href(link.path)}
                     aria-current={isActive(link.path) ? "page" : undefined}
                     className={cn(
-                      "block rounded-md px-3 py-3 text-base font-medium text-white/85 transition-colors hover:bg-white/5 hover:text-brand-gold",
+                      "block rounded-md px-3 py-2.5 text-base font-medium text-white/85 transition-colors hover:bg-white/5 hover:text-brand-gold",
                       linkClasses,
-                      isActive(link.path) && "text-brand-gold"
+                      isActive(link.path) && "bg-white/5 text-brand-gold font-semibold"
                     )}
                   >
                     {t(link.key)}
@@ -215,14 +220,15 @@ export default function Header() {
             </ul>
           </nav>
 
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 flex justify-between items-center border-t border-white/10 pt-4">
+            <span className="text-xs uppercase tracking-wider text-white/50">{tHeader("language")}</span>
             <LanguageToggle currentLocale={locale} localelessPath={localelessPath} />
           </div>
 
           <Link
-            href={href("/contact")}
+            href={href("/booking")}
             className={cn(
-              "mt-4 block rounded-md bg-brand-gold px-5 py-3 text-center text-base font-medium text-brand-charcoal transition-opacity hover:opacity-90",
+              "mt-4 block rounded-md bg-brand-gold px-5 py-3 text-center text-base font-semibold text-brand-charcoal transition-all hover:bg-brand-gold/90",
               linkClasses
             )}
           >

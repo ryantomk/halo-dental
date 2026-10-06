@@ -1,16 +1,33 @@
-import type { Metadata } from "next";
+import { requireAdminSession } from "@/lib/admin/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import GalleryClient, { type GalleryItemRecord } from "@/components/admin/GalleryClient";
 
-// TODO: Build the Gallery uploader (admin-only; before/after pairs, tag to service, reorder, publish toggle).
-// See halo-dental-technical-specification.md, Section 4 (Page structure).
-
-export const metadata: Metadata = {
-  title: "Halo Dental Cosmetic & Orthodontic Centre",
+export const metadata = {
+  title: "Gallery Management | Halo Dental Staff Portal",
 };
 
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminGalleryPage() {
+  await requireAdminSession();
+  const adminClient = createAdminClient();
+
+  const [itemsRes, servicesRes] = await Promise.all([
+    adminClient
+      .from("gallery_items")
+      .select("*, services(name_en)")
+      .order("display_order", { ascending: true }),
+    adminClient
+      .from("services")
+      .select("id, name_en")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+  ]);
+
   return (
-    <main>
-      {/* Scaffolded in Phase 1 — content built in a later phase */}
-    </main>
+    <GalleryClient
+      initialGalleryItems={(itemsRes.data as unknown as GalleryItemRecord[]) || []}
+      services={servicesRes.data || []}
+    />
   );
 }

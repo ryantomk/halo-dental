@@ -1,14 +1,22 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
-return {
-rules: [
-{
-userAgent: "*",
-allow: "/",
-disallow: "/admin",
-},
-],
-sitemap: "https://halodental.in/sitemap.xml",
-};
+  const baseUrl = getSiteUrl();
+
+  return {
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/admin",
+          "/admin/",
+          "/api",
+          "/api/",
+        ],
+      },
+    ],
+    sitemap: `${baseUrl}/sitemap.xml`,
+  };
 }
