@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
   MessageSquare,
   Settings,
+  UserCog,
   LogOut,
   X,
   ShieldCheck,
@@ -34,6 +35,7 @@ interface NavSection {
     href: string;
     icon: LucideIcon;
     exact?: boolean;
+    adminOnly?: boolean;
   }[];
 }
 
@@ -68,8 +70,9 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: "SETTINGS",
+    title: "TEAM & SETTINGS",
     items: [
+      { label: "Staff", href: "/admin/staff", icon: UserCog, adminOnly: true },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },
@@ -120,7 +123,9 @@ export default function AdminSidebar({ staffUser, isOpen, onClose }: AdminSideba
               {section.title}
             </div>
             <div className="space-y-0.5">
-              {section.items.map((item) => {
+              {section.items
+                .filter((item) => !item.adminOnly || staffUser.role === "admin")
+                .map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href, item.exact);
                 return (

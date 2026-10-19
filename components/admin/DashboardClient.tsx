@@ -26,6 +26,7 @@ import {
   BookOpen,
   Image as ImageIcon,
   MessageSquare,
+  UserCog,
 } from "lucide-react";
 import type { ServiceOption } from "@/app/actions/booking";
 
@@ -137,7 +138,7 @@ export default function DashboardClient({
           <span className="text-[11px] text-slate-400">Reception &amp; Content Management Shortcuts</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5">
           <button
             type="button"
             onClick={() => setIsManualBookingOpen(true)}
@@ -159,6 +160,16 @@ export default function DashboardClient({
             </div>
             <span className="truncate">Add Patient</span>
           </button>
+
+          <Link
+            href="/admin/staff"
+            className="flex items-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold text-xs transition-all hover:shadow-xs group"
+          >
+            <div className="w-7 h-7 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+              <UserCog className="w-4 h-4" />
+            </div>
+            <span className="truncate">Manage Staff</span>
+          </Link>
 
           <Link
             href="/admin/services?new=1"

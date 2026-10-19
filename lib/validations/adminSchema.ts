@@ -115,3 +115,44 @@ export const testimonialFormSchema = z.object({
 });
 
 export type TestimonialFormInput = z.infer<typeof testimonialFormSchema>;
+
+export const staffCreateSchema = z.object({
+  fullName: z.string().trim().min(2, "Full name must be at least 2 characters.").max(120),
+  email: z.string().trim().email("Please provide a valid email address."),
+  role: z.enum(["admin", "staff", "doctor"], {
+    errorMap: () => ({ message: "Role must be admin, staff, or doctor." }),
+  }),
+  password: z.string().min(8, "Temporary password must be at least 8 characters.").max(100),
+  isActive: z.boolean().default(true),
+});
+
+export type StaffCreateInput = z.infer<typeof staffCreateSchema>;
+
+export const staffUpdateSchema = z.object({
+  id: z.string().uuid("Invalid staff user ID."),
+  fullName: z.string().trim().min(2, "Full name must be at least 2 characters.").max(120),
+  role: z.enum(["admin", "staff", "doctor"], {
+    errorMap: () => ({ message: "Role must be admin, staff, or doctor." }),
+  }),
+  isActive: z.boolean(),
+});
+
+export type StaffUpdateInput = z.infer<typeof staffUpdateSchema>;
+
+export const clinicSettingsSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]{6,15}$/, "Please provide a valid contact phone number."),
+  whatsapp: z
+    .string()
+    .trim()
+    .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]{6,15}$/, "Please provide a valid WhatsApp phone number."),
+  email: z.string().trim().email("Please provide a valid clinic email address."),
+  address_line1: z.string().trim().min(5, "Address Line 1 is required."),
+  address_line2: z.string().trim().optional(),
+  opening_hours: z.record(z.string()).optional(),
+});
+
+export type ClinicSettingsInput = z.infer<typeof clinicSettingsSchema>;
+

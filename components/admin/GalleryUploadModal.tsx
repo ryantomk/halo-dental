@@ -43,6 +43,7 @@ export default function GalleryUploadModal({
   const [isPublished, setIsPublished] = useState(true);
 
   const [submitting, setSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -230,6 +231,7 @@ export default function GalleryUploadModal({
                 onChange={setBeforeImageUrl}
                 folder="gallery/before"
                 aspectRatio="square"
+                onUploadingChange={setIsUploadingImage}
               />
               <ImageUploader
                 label="After Image *"
@@ -238,6 +240,7 @@ export default function GalleryUploadModal({
                 onChange={setAfterImageUrl}
                 folder="gallery/after"
                 aspectRatio="square"
+                onUploadingChange={setIsUploadingImage}
               />
             </div>
           ) : (
@@ -249,6 +252,7 @@ export default function GalleryUploadModal({
                 onChange={setNormalImageUrl}
                 folder="gallery"
                 aspectRatio="video"
+                onUploadingChange={setIsUploadingImage}
               />
             </div>
           )}
@@ -355,7 +359,7 @@ export default function GalleryUploadModal({
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                disabled={submitting}
+                disabled={submitting || isUploadingImage}
                 onClick={onClose}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors disabled:opacity-50"
               >
@@ -363,13 +367,18 @@ export default function GalleryUploadModal({
               </button>
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || isUploadingImage}
                 className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 active:bg-teal-800 rounded-xl shadow-xs transition-colors disabled:opacity-60 cursor-pointer"
               >
                 {submitting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Saving Showcase...</span>
+                  </>
+                ) : isUploadingImage ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Uploading Photo...</span>
                   </>
                 ) : (
                   <>

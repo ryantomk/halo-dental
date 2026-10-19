@@ -14,6 +14,9 @@ import {
   blogPostFormSchema,
   galleryItemFormSchema,
   testimonialFormSchema,
+  staffCreateSchema,
+  staffUpdateSchema,
+  clinicSettingsSchema,
   type PatientInput,
   type AdminAppointmentInput,
   type RescheduleAppointmentInput,
@@ -22,6 +25,9 @@ import {
   type BlogPostFormInput,
   type GalleryItemFormInput,
   type TestimonialFormInput,
+  type StaffCreateInput,
+  type StaffUpdateInput,
+  type ClinicSettingsInput,
 } from "@/lib/validations/adminSchema";
 import { checkSlotAvailable, type AvailabilityBlock } from "@/lib/booking/availability";
 
@@ -1122,14 +1128,27 @@ export async function uploadAdminImageAction(
       return { success: false, error: "Image file size exceeds the 10MB limit." };
     }
 
+    // Determine and normalize MIME type
+    let mimeType = file.type?.toLowerCase();
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+
+    if (!mimeType || mimeType === "image/jpg" || mimeType === "image/pjpeg" || mimeType === "application/octet-stream") {
+      if (ext === "jpg" || ext === "jpeg") mimeType = "image/jpeg";
+      else if (ext === "png") mimeType = "image/png";
+      else if (ext === "webp") mimeType = "image/webp";
+      else if (ext === "svg") mimeType = "image/svg+xml";
+    }
+
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
-    if (!allowedTypes.includes(file.type)) {
+    if (!allowedTypes.includes(mimeType)) {
       return { success: false, error: "Unsupported format. Please upload a JPG, PNG, WebP, or SVG." };
     }
 
     const adminClient = createAdminClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() || "webp";
-    const cleanExt = ["jpg", "jpeg", "png", "webp", "svg"].includes(ext) ? ext : "webp";
+    const cleanExt = ["jpg", "jpeg", "png", "webp", "svg"].includes(ext)
+      ? (ext === "jpeg" ? "jpg" : ext)
+      : (mimeType === "image/jpeg" ? "jpg" : mimeType === "image/png" ? "png" : mimeType === "image/svg+xml" ? "svg" : "webp");
+
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${cleanExt}`;
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -1137,13 +1156,13 @@ export async function uploadAdminImageAction(
     const { error: uploadErr } = await adminClient.storage
       .from("clinic-public")
       .upload(fileName, buffer, {
-        contentType: file.type,
+        contentType: mimeType,
         upsert: true,
       });
 
     if (uploadErr) {
       console.error("[uploadAdminImageAction] Storage error:", uploadErr);
-      return { success: false, error: "Could not upload image to storage. Please try again." };
+      return { success: false, error: `Could not upload image to storage: ${uploadErr.message || "Unknown error"}` };
     }
 
     const { data: pubData } = adminClient.storage.from("clinic-public").getPublicUrl(fileName);
@@ -1153,7 +1172,7 @@ export async function uploadAdminImageAction(
       action: "storage.upload",
       entityType: "storage.objects",
       entityId: fileName,
-      details: { folder, size: file.size, type: file.type },
+      details: { folder, size: file.size, type: mimeType },
     });
 
     return { success: true, url: pubData.publicUrl };
@@ -1167,26 +1186,29 @@ export async function uploadAdminImageAction(
 // 8. SITE SETTINGS
 // ============================================================================
 
-export async function updateClinicContactAction(data: {
-  phone: string;
-  whatsapp: string;
-  email: string;
-  address_line1: string;
-  address_line2?: string;
-  opening_hours?: Record<string, string>;
-}) {
+export async function updateClinicContactAction(data: ClinicSettingsInput) {
   const session = await requireAdminSession();
+  const validation = clinicSettingsSchema.safeParse(data);
+
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.errors[0]?.message || "Invalid clinic settings.",
+    };
+  }
+
+  const validData = validation.data;
   const adminClient = createAdminClient();
 
   const { error } = await adminClient
     .from("clinics")
     .update({
-      phone: data.phone,
-      whatsapp: data.whatsapp,
-      email: data.email,
-      address_line1: data.address_line1,
-      address_line2: data.address_line2 || null,
-      opening_hours: (data.opening_hours || {}) as any,
+      phone: validData.phone,
+      whatsapp: validData.whatsapp,
+      email: validData.email,
+      address_line1: validData.address_line1,
+      address_line2: validData.address_line2 || null,
+      opening_hours: (validData.opening_hours || {}) as any,
       updated_at: new Date().toISOString(),
     })
     .eq("id", session.staffUser.clinic_id || "22c7e5ce-340d-4c33-a83f-dda41af69843");
@@ -1200,7 +1222,7 @@ export async function updateClinicContactAction(data: {
     action: "settings.update_clinic",
     entityType: "clinics",
     entityId: session.staffUser.clinic_id,
-    details: data,
+    details: validData,
   });
 
   revalidatePath("/admin/settings");
@@ -1208,3 +1230,195 @@ export async function updateClinicContactAction(data: {
   revalidatePath("/ml");
   return { success: true };
 }
+
+// ============================================================================
+// 10. STAFF MANAGEMENT ACTIONS
+// ============================================================================
+
+export async function createStaffUserAction(rawInput: StaffCreateInput) {
+  const session = await requireAdminSession();
+
+  // Role check: Only admin role can create staff accounts
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can create staff accounts." };
+  }
+
+  const validation = staffCreateSchema.safeParse(rawInput);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.errors[0]?.message || "Invalid staff member details.",
+    };
+  }
+
+  const { fullName, email, role, password, isActive } = validation.data;
+  const adminClient = createAdminClient();
+
+  // Check if staff user already exists in staff_users
+  const { data: existingStaff } = await adminClient
+    .from("staff_users")
+    .select("id, email")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
+
+  if (existingStaff) {
+    return { success: false, error: `A staff member with email "${email}" already exists.` };
+  }
+
+  // Create user in Supabase Auth via adminClient
+  const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+    email: email.toLowerCase(),
+    password: password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+      role: role,
+    },
+  });
+
+  if (authError || !authData?.user) {
+    console.error("[createStaffUserAction] Auth error:", authError);
+    return {
+      success: false,
+      error: authError?.message || "Failed to create authentication credentials for staff member.",
+    };
+  }
+
+  const newUserId = authData.user.id;
+
+  // Insert corresponding staff_users record
+  const { error: dbError } = await adminClient.from("staff_users").insert({
+    id: newUserId,
+    email: email.toLowerCase(),
+    full_name: fullName,
+    role: role,
+    clinic_id: session.staffUser.clinic_id,
+    is_active: isActive,
+  });
+
+  if (dbError) {
+    console.error("[createStaffUserAction] DB error, rolling back auth user:", dbError);
+    // Rollback: delete auth user to avoid dangling record
+    await adminClient.auth.admin.deleteUser(newUserId);
+    return { success: false, error: "Failed to create staff profile record. Rolled back successfully." };
+  }
+
+  // Log in audit_logs
+  await logAdminAction({
+    staffUserId: session.staffUser.id,
+    action: "staff.create",
+    entityType: "staff_users",
+    entityId: newUserId,
+    details: { email: email.toLowerCase(), full_name: fullName, role, is_active: isActive },
+  });
+
+  revalidatePath("/admin/staff");
+  return { success: true };
+}
+
+export async function updateStaffUserAction(rawInput: StaffUpdateInput) {
+  const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can update staff accounts." };
+  }
+
+  const validation = staffUpdateSchema.safeParse(rawInput);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.errors[0]?.message || "Invalid staff member update data.",
+    };
+  }
+
+  const { id, fullName, role, isActive } = validation.data;
+  const adminClient = createAdminClient();
+
+  // Self-protection: An admin cannot demote or deactivate their own active account
+  if (id === session.staffUser.id) {
+    if (role !== "admin") {
+      return { success: false, error: "You cannot change your own administrator role." };
+    }
+    if (!isActive) {
+      return { success: false, error: "You cannot deactivate your own active session." };
+    }
+  }
+
+  // Update staff_users record
+  const { error: dbError } = await adminClient
+    .from("staff_users")
+    .update({
+      full_name: fullName,
+      role: role,
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (dbError) {
+    console.error("[updateStaffUserAction] DB error:", dbError);
+    return { success: false, error: "Failed to update staff member record." };
+  }
+
+  // Sync user_metadata in Supabase Auth
+  try {
+    await adminClient.auth.admin.updateUserById(id, {
+      user_metadata: {
+        full_name: fullName,
+        role: role,
+      },
+    });
+  } catch (authErr) {
+    console.warn("[updateStaffUserAction] Auth metadata update warning:", authErr);
+  }
+
+  // Log audit
+  await logAdminAction({
+    staffUserId: session.staffUser.id,
+    action: "staff.update",
+    entityType: "staff_users",
+    entityId: id,
+    details: { full_name: fullName, role, is_active: isActive },
+  });
+
+  revalidatePath("/admin/staff");
+  return { success: true };
+}
+
+export async function toggleStaffStatusAction(targetUserId: string, isActive: boolean) {
+  const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can change staff status." };
+  }
+
+  if (targetUserId === session.staffUser.id && !isActive) {
+    return { success: false, error: "You cannot deactivate your own account." };
+  }
+
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from("staff_users")
+    .update({
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", targetUserId);
+
+  if (error) {
+    console.error("[toggleStaffStatusAction] Error:", error);
+    return { success: false, error: "Failed to update staff status." };
+  }
+
+  await logAdminAction({
+    staffUserId: session.staffUser.id,
+    action: isActive ? "staff.activate" : "staff.deactivate",
+    entityType: "staff_users",
+    entityId: targetUserId,
+    details: { is_active: isActive },
+  });
+
+  revalidatePath("/admin/staff");
+  return { success: true };
+}
+

@@ -21,9 +21,17 @@ interface ImageUploaderProps {
   folder?: string;
   aspectRatio?: "square" | "video" | "wide" | "auto";
   maxSizeMb?: number;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+];
 
 export default function ImageUploader({
   label = "Upload Image",
@@ -33,10 +41,13 @@ export default function ImageUploader({
   folder = "uploads",
   aspectRatio = "auto",
   maxSizeMb = 10,
+  onUploadingChange,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [lastSelectedFile, setLastSelectedFile] = useState<File | null>(null);
+  const [fileMeta, setFileMeta] = useState<{ name: string; size: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const aspectClass = {
@@ -46,18 +57,29 @@ export default function ImageUploader({
     auto: "h-48 w-full max-w-md",
   }[aspectRatio];
 
+  function formatBytes(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
   function validateFile(file: File): string | null {
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    const type = file.type?.toLowerCase();
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const isValidType = ALLOWED_TYPES.includes(type) || ["jpg", "jpeg", "png", "webp", "svg"].includes(ext);
+
+    if (!isValidType) {
       return "Only JPG, PNG, WebP, and SVG images are supported.";
     }
     if (file.size > maxSizeMb * 1024 * 1024) {
-      return `Image exceeds maximum allowed size of ${maxSizeMb}MB. Please choose a smaller file.`;
+      return `Image exceeds maximum allowed size of ${maxSizeMb}MB (${formatBytes(file.size)}). Please choose a smaller file.`;
     }
     return null;
   }
 
   async function handleFileUpload(file: File) {
     setErrorMessage("");
+    setLastSelectedFile(file);
     const error = validateFile(file);
     if (error) {
       setErrorMessage(error);
@@ -66,6 +88,8 @@ export default function ImageUploader({
 
     try {
       setUploading(true);
+      if (onUploadingChange) onUploadingChange(true);
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", folder);
@@ -76,11 +100,16 @@ export default function ImageUploader({
         setErrorMessage(result.error || "Failed to upload image. Please try again.");
       } else {
         onChange(result.url);
+        setFileMeta({
+          name: file.name,
+          size: formatBytes(file.size),
+        });
       }
     } catch {
-      setErrorMessage("Network error while uploading image. Please check your connection.");
+      setErrorMessage("Network error while uploading image. Please check your connection and try again.");
     } finally {
       setUploading(false);
+      if (onUploadingChange) onUploadingChange(false);
     }
   }
 
@@ -89,7 +118,6 @@ export default function ImageUploader({
     if (file) {
       handleFileUpload(file);
     }
-    // reset input so same file can be re-selected if replaced
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -116,22 +144,39 @@ export default function ImageUploader({
 
   function handleRemove() {
     onChange(null);
+    setFileMeta(null);
     setErrorMessage("");
+    setLastSelectedFile(null);
+  }
+
+  function handleRetry() {
+    if (lastSelectedFile) {
+      handleFileUpload(lastSelectedFile);
+    } else {
+      fileInputRef.current?.click();
+    }
   }
 
   return (
     <div className="space-y-2">
-      {label && (
-        <label className="block text-xs font-semibold text-slate-700 tracking-tight">
-          {label}
-        </label>
-      )}
+      <div className="flex items-center justify-between">
+        {label && (
+          <label className="block text-xs font-semibold text-slate-700 tracking-tight">
+            {label}
+          </label>
+        )}
+        {fileMeta && value && (
+          <span className="text-[11px] text-slate-400 font-normal truncate max-w-[200px]" title={fileMeta.name}>
+            {fileMeta.name} ({fileMeta.size})
+          </span>
+        )}
+      </div>
 
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+        accept="image/jpeg,image/png,image/webp,image/svg+xml,.jpg,.jpeg,.png,.webp,.svg"
         onChange={handleFileChange}
         className="sr-only"
         aria-label={label}
@@ -196,8 +241,8 @@ export default function ImageUploader({
           {uploading ? (
             <div className="flex flex-col items-center gap-2.5">
               <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
-              <div className="text-xs font-semibold text-slate-700">Uploading image to CDN...</div>
-              <div className="text-[11px] text-slate-400">Optimizing and storing safely</div>
+              <div className="text-xs font-semibold text-slate-700">Uploading to cloud CDN...</div>
+              <div className="text-[11px] text-slate-400">Verifying dimensions & format</div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -219,11 +264,22 @@ export default function ImageUploader({
       )}
 
       {errorMessage && (
-        <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs animate-in fade-in duration-200">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-          <span>{errorMessage}</span>
+        <div className="flex items-center justify-between gap-2 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-[11px] font-semibold transition-colors shrink-0"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Retry
+          </button>
         </div>
       )}
     </div>
   );
 }
+
