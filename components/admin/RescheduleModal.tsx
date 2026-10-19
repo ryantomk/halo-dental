@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
+import WhatsAppModal from "./WhatsAppModal";
 import { rescheduleAppointmentAction } from "@/app/actions/admin";
 import { getAvailableSlots } from "@/app/actions/booking";
 import { type TimeSlot } from "@/lib/booking/availability";
@@ -31,6 +32,8 @@ export default function RescheduleModal({
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSundayClosed, setIsSundayClosed] = useState(false);
+  const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [rescheduledAppt, setRescheduledAppt] = useState<AppointmentRecord | null>(null);
 
   // Sync date when appointment changes
   useEffect(() => {
@@ -100,8 +103,13 @@ export default function RescheduleModal({
         return;
       }
 
+      setRescheduledAppt({
+        ...appointment,
+        appointment_date: selectedDate,
+        appointment_time: selectedTime,
+      });
+      setIsWhatsAppOpen(true);
       if (onSuccess) onSuccess();
-      onClose();
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to reschedule appointment.");
     } finally {
@@ -217,6 +225,18 @@ export default function RescheduleModal({
           </button>
         </div>
       </form>
+
+      {/* Post-Reschedule WhatsApp Composer */}
+      <WhatsAppModal
+        isOpen={isWhatsAppOpen}
+        onClose={() => {
+          setIsWhatsAppOpen(false);
+          onClose();
+        }}
+        appointment={rescheduledAppt}
+        initialTemplate="reschedule"
+      />
     </Modal>
   );
 }
+

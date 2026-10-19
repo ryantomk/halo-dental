@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import StatusBadge from "./StatusBadge";
+import WhatsAppModal from "./WhatsAppModal";
+import { type WhatsAppTemplateType } from "@/lib/utils/whatsapp";
 import { updateAppointmentStatusAction } from "@/app/actions/admin";
 import {
   Calendar,
@@ -70,6 +72,8 @@ export default function BookingDetailModal({
   const [editNotes, setEditNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(appointment?.admin_notes || "");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [whatsAppTemplate, setWhatsAppTemplate] = useState<WhatsAppTemplateType>("confirmation");
 
   if (!appointment) return null;
 
@@ -90,8 +94,19 @@ export default function BookingDetailModal({
       if (!res.success) {
         setErrorMessage(res.error || "Failed to update appointment status.");
       } else {
+        appointment.status = newStatus;
         if (onUpdated) onUpdated();
-        onClose();
+
+        // Prompt appropriate WhatsApp message when confirmed or cancelled
+        if (newStatus === "confirmed") {
+          setWhatsAppTemplate("confirmation");
+          setIsWhatsAppOpen(true);
+        } else if (newStatus === "cancelled") {
+          setWhatsAppTemplate("cancellation");
+          setIsWhatsAppOpen(true);
+        } else {
+          onClose();
+        }
       }
     } catch (err: any) {
       setErrorMessage(err?.message || "Error updating status.");
@@ -99,12 +114,6 @@ export default function BookingDetailModal({
       setLoadingAction(null);
     }
   }
-
-  // Safe WhatsApp Link: never exposes clinical PHI
-  const cleanPhone = appointment.patient.phone.replace(/[^0-9]/g, "");
-  const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    `Hello ${appointment.patient.full_name}, this is Halo Dental Clinic regarding your appointment (Ref: ${appointment.reference_code}).`
-  )}`;
 
   return (
     <Modal
@@ -134,16 +143,64 @@ export default function BookingDetailModal({
             <StatusBadge status={appointment.status} />
           </div>
 
-          <div className="flex items-center gap-2">
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>Contact via WhatsApp</span>
-            </a>
+          <div className="flex flex-wrap items-center gap-2">
+            {appointment.status === "confirmed" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWhatsAppTemplate("confirmation");
+                    setIsWhatsAppOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                  title="Send official appointment confirmation via WhatsApp"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Send Confirmation</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWhatsAppTemplate("reminder");
+                    setIsWhatsAppOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                  title="Send friendly appointment reminder"
+                >
+                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Send Reminder</span>
+                </button>
+              </>
+            )}
+
+            {appointment.status === "cancelled" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setWhatsAppTemplate("cancellation");
+                  setIsWhatsAppOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                title="Send cancellation notice via WhatsApp"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span>Send Cancellation Notice</span>
+              </button>
+            )}
+
+            {appointment.status !== "confirmed" && appointment.status !== "cancelled" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setWhatsAppTemplate("reminder");
+                  setIsWhatsAppOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>WhatsApp Patient</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -335,6 +392,15 @@ export default function BookingDetailModal({
           </div>
         </div>
       </div>
+
+      {/* WhatsApp Message Composer & Link Generator */}
+      <WhatsAppModal
+        isOpen={isWhatsAppOpen}
+        onClose={() => setIsWhatsAppOpen(false)}
+        appointment={appointment}
+        initialTemplate={whatsAppTemplate}
+      />
     </Modal>
   );
 }
+
