@@ -124,23 +124,29 @@ export default function Hero({ locale = defaultLocale }: HeroProps) {
             </div>
           </div>
 
-          {/* Floating booking preview card */}
-          <div className="relative -mt-6 mx-4 rounded-xl border border-brand-charcoal/10 bg-brand-ivory p-5 shadow-xl sm:absolute sm:-bottom-6 sm:-right-4 sm:mx-0 sm:mt-0 sm:w-64 lg:-right-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold">
-              {t("previewBadge")}
-            </p>
-            <p className="mt-1 font-display text-base font-semibold text-brand-charcoal">
-              {t("previewTitle")}
-            </p>
-            <p className="mt-1 text-xs text-brand-charcoal/70">
-              {t("previewDesc")}
-            </p>
-            <Link
-              href={bookingHref}
-              className="mt-3.5 inline-flex w-full items-center justify-center rounded-md bg-brand-midnight px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-charcoal"
-            >
-              {t("checkAvailability")}
-            </Link>
+          {/* Consultation & Assessment card positioned cleanly below the hero visual */}
+          <div className="mt-4 rounded-xl border border-brand-charcoal/10 bg-brand-ivory p-4 shadow-xl sm:mt-5 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold">
+                  {t("previewBadge")}
+                </p>
+                <p className="mt-1 font-display text-base font-semibold text-brand-charcoal">
+                  {t("previewTitle")}
+                </p>
+                <p className="mt-0.5 text-xs text-brand-charcoal/70">
+                  {t("previewDesc")}
+                </p>
+              </div>
+              <div className="mt-3.5 sm:mt-0 sm:flex-shrink-0">
+                <Link
+                  href={bookingHref}
+                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-md bg-brand-midnight px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+                >
+                  {t("checkAvailability")}
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>
