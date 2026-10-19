@@ -18,3 +18,28 @@ body {
   background-color: theme("colors.brand.linen");
   color: theme("colors.brand.charcoal");
 }
+
+/* Remove default mobile tap highlight flash */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent accidental text selection, touch callouts, and auto-copy menus on mobile touch devices */
+@media (pointer: coarse) {
+  html,
+  body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Form inputs, textareas and editable fields must remain fully selectable and interactive */
+  input,
+  textarea,
+  [contenteditable="true"],
+  .selectable-text {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}

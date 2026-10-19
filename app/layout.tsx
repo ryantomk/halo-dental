@@ -10,6 +10,12 @@ export const metadata: Metadata = {
   title: "Halo Dental Cosmetic & Orthodontic Centre",
   description:
     "Premium cosmetic and orthodontic dental care in Angadipuram, Malappuram, Kerala.",
+  formatDetection: {
+    telephone: false,
+    date: false,
+    address: false,
+    email: false,
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

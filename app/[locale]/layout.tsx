@@ -50,6 +50,10 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <head>
+        <meta
+          name="format-detection"
+          content="telephone=no, date=no, address=no, email=no"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(clinicJsonLd) }}
