@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StatusBadge, { type AppointmentStatus } from "./StatusBadge";
 import BookingDetailModal, { type AppointmentRecord } from "./BookingDetailModal";
 import RescheduleModal from "./RescheduleModal";
@@ -26,6 +26,7 @@ interface BookingsClientProps {
   services: ServiceOption[];
   patients: { id: string; full_name: string; phone: string; email?: string | null }[];
   doctors: { id: string; name: string; specialization?: string }[];
+  defaultStatus?: string;
 }
 
 export default function BookingsClient({
@@ -33,12 +34,20 @@ export default function BookingsClient({
   services,
   patients,
   doctors,
+  defaultStatus = "all",
 }: BookingsClientProps) {
   const [appointments, setAppointments] = useState<AppointmentRecord[]>(initialAppointments);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(defaultStatus);
   const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("");
+
+  // Sync statusFilter if defaultStatus prop changes
+  useEffect(() => {
+    if (defaultStatus) {
+      setStatusFilter(defaultStatus);
+    }
+  }, [defaultStatus]);
 
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRecord | null>(null);
   const [rescheduleAppointment, setRescheduleAppointment] = useState<AppointmentRecord | null>(null);

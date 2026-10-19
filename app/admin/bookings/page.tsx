@@ -9,7 +9,11 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminBookingsPage() {
+export default async function AdminBookingsPage({
+  searchParams,
+}: {
+  searchParams?: { status?: string };
+}) {
   await requireAdminSession();
   const adminClient = createAdminClient();
 
@@ -55,6 +59,7 @@ export default async function AdminBookingsPage() {
       services={serviceOptions}
       patients={patients || []}
       doctors={doctors || []}
+      defaultStatus={searchParams?.status || "all"}
     />
   );
 }

@@ -13,20 +13,31 @@ export default async function AdminDashboardPage() {
   await requireAdminSession();
   const adminClient = createAdminClient();
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Clinic date in Indian Standard Time (Asia/Kolkata)
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 
-  // 1. Fetch Today's Appointments & Status Breakdown
-  const { data: todayAppointments } = await adminClient
+  // 1. Fetch All Active Appointments for Global & Today Status Metrics
+  const { data: allAppointments } = await adminClient
     .from("appointments")
-    .select("status")
-    .eq("appointment_date", today);
+    .select("status, appointment_date");
 
-  const todayList = todayAppointments || [];
+  const list = allAppointments || [];
+
+  // Today's specific breakdown
+  const todayList = list.filter((a) => a.appointment_date === today);
   const totalToday = todayList.length;
   const pendingToday = todayList.filter((a) => a.status === "pending").length;
   const confirmedToday = todayList.filter((a) => a.status === "confirmed").length;
   const completedToday = todayList.filter((a) => a.status === "completed").length;
   const cancelledToday = todayList.filter((a) => a.status === "cancelled").length;
+
+  // Clinic-wide actionable metrics
+  const totalPending = list.filter((a) => a.status === "pending").length;
+  const totalConfirmed = list.filter((a) => a.status === "confirmed").length;
+  const upcomingConfirmed = list.filter(
+    (a) => a.status === "confirmed" && a.appointment_date >= today
+  ).length;
+  const totalCompleted = list.filter((a) => a.status === "completed").length;
 
   // 2. Fetch Total Patient Registry Count
   const { count: patientCount } = await adminClient
@@ -94,6 +105,10 @@ export default async function AdminDashboardPage() {
         completedToday,
         cancelledToday,
         totalPatients: patientCount || 0,
+        totalPending,
+        totalConfirmed,
+        upcomingConfirmed,
+        totalCompleted,
       }}
       pendingAppointments={(pendingRaw as unknown as AppointmentRecord[]) || []}
       upcomingAppointments={(upcomingRaw as unknown as AppointmentRecord[]) || []}

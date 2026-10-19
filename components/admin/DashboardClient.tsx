@@ -38,6 +38,10 @@ interface DashboardClientProps {
     completedToday: number;
     cancelledToday: number;
     totalPatients: number;
+    totalPending: number;
+    totalConfirmed: number;
+    upcomingConfirmed: number;
+    totalCompleted: number;
   };
   upcomingAppointments: AppointmentRecord[];
   pendingAppointments: AppointmentRecord[];
@@ -213,60 +217,102 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* Today's Metrics Grid */}
+      {/* Practice Metrics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-2xs">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Total Today
-          </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">
-            {stats.totalToday}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">Scheduled appointments</div>
-        </div>
-
-        <div className="p-4 bg-white border border-amber-200/80 rounded-2xl shadow-2xs bg-gradient-to-br from-white to-amber-50/40">
+        <Link
+          href="/admin/bookings?status=pending"
+          className="p-4 bg-white border border-amber-200/80 rounded-2xl shadow-2xs bg-gradient-to-br from-white to-amber-50/40 hover:border-amber-300 transition-all group block"
+        >
           <div className="text-xs font-semibold text-amber-700 uppercase tracking-wider flex items-center justify-between">
-            <span>Pending</span>
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span>Pending Action</span>
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
           </div>
-          <div className="text-2xl font-bold text-amber-900 mt-2">
-            {stats.pendingToday}
+          <div className="text-2xl font-bold text-amber-900 mt-2 flex items-baseline gap-2">
+            <span>{stats.totalPending}</span>
+            {stats.pendingToday > 0 && (
+              <span className="text-xs font-semibold text-amber-600">
+                ({stats.pendingToday} today)
+              </span>
+            )}
           </div>
-          <div className="text-[11px] text-amber-700/80 mt-1">Awaiting confirmation</div>
-        </div>
+          <div className="text-[11px] text-amber-700/80 mt-1">
+            {stats.totalPending === 1
+              ? "1 booking awaiting confirmation"
+              : `${stats.totalPending} bookings awaiting confirmation`}
+          </div>
+        </Link>
 
-        <div className="p-4 bg-white border border-emerald-200/80 rounded-2xl shadow-2xs bg-gradient-to-br from-white to-emerald-50/40">
+        <Link
+          href="/admin/bookings?status=confirmed"
+          className="p-4 bg-white border border-emerald-200/80 rounded-2xl shadow-2xs bg-gradient-to-br from-white to-emerald-50/40 hover:border-emerald-300 transition-all group block"
+        >
           <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider flex items-center justify-between">
             <span>Confirmed</span>
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
           </div>
-          <div className="text-2xl font-bold text-emerald-900 mt-2">
-            {stats.confirmedToday}
+          <div className="text-2xl font-bold text-emerald-900 mt-2 flex items-baseline gap-2">
+            <span>{stats.totalConfirmed}</span>
+            {stats.confirmedToday > 0 && (
+              <span className="text-xs font-semibold text-emerald-600">
+                ({stats.confirmedToday} today)
+              </span>
+            )}
           </div>
-          <div className="text-[11px] text-emerald-700/80 mt-1">Ready for consultation</div>
-        </div>
+          <div className="text-[11px] text-emerald-700/80 mt-1">
+            {stats.upcomingConfirmed} upcoming on calendar
+          </div>
+        </Link>
 
-        <div className="p-4 bg-white border border-teal-200/80 rounded-2xl shadow-2xs bg-gradient-to-br from-white to-teal-50/40">
+        <Link
+          href="/admin/calendar"
+          className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-2xs hover:border-slate-300 transition-all group block"
+        >
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+            <span>Today&apos;s Schedule</span>
+            <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-600 transition-colors" />
+          </div>
+          <div className="text-2xl font-bold text-slate-900 mt-2">
+            {stats.totalToday}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1">
+            {stats.confirmedToday > 0
+              ? `${stats.confirmedToday} confirmed for today`
+              : "No visits scheduled today"}
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/bookings?status=completed"
+          className="p-4 bg-white border border-teal-200/80 rounded-2xl shadow-2xs bg-gradient-to-br from-white to-teal-50/40 hover:border-teal-300 transition-all group block"
+        >
           <div className="text-xs font-semibold text-teal-700 uppercase tracking-wider flex items-center justify-between">
             <span>Completed</span>
             <span className="w-2 h-2 rounded-full bg-teal-500" />
           </div>
-          <div className="text-2xl font-bold text-teal-900 mt-2">
-            {stats.completedToday}
+          <div className="text-2xl font-bold text-teal-900 mt-2 flex items-baseline gap-2">
+            <span>{stats.totalCompleted}</span>
+            {stats.completedToday > 0 && (
+              <span className="text-xs font-semibold text-teal-600">
+                ({stats.completedToday} today)
+              </span>
+            )}
           </div>
-          <div className="text-[11px] text-teal-700/80 mt-1">Treated today</div>
-        </div>
+          <div className="text-[11px] text-teal-700/80 mt-1">Treated consultations</div>
+        </Link>
 
-        <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-2xs">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Total Patients
+        <Link
+          href="/admin/patients"
+          className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-2xs hover:border-slate-300 transition-all group block"
+        >
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+            <span>Total Patients</span>
+            <User className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-600 transition-colors" />
           </div>
           <div className="text-2xl font-bold text-slate-900 mt-2">
             {stats.totalPatients}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">In clinic registry</div>
-        </div>
+        </Link>
       </div>
 
       {/* Actionable Pending Bookings Section */}
