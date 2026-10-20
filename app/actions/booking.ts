@@ -26,6 +26,7 @@
 import { bookingSchema, type BookingInput, type BookingResult } from "@/lib/validations/bookingSchema";
 import { checkSlotAvailable, getDailySlotAvailability, type TimeSlot } from "@/lib/booking/availability";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit } from "@/lib/security/rateLimiter";
 
 export interface ServiceOption {
   id: string;
@@ -172,7 +173,17 @@ export async function createBooking(rawInput: BookingInput): Promise<BookingResu
     };
   }
 
-  // 3. Server-side Slot Availability Verification (Race condition prevention)
+  // 3. Sliding-window rate limiting: max 5 bookings per 10 minutes per phone
+  const cleanPhone = patientPhone.replace(/\D/g, "");
+  const rateLimit = checkRateLimit(`booking:${cleanPhone}`, 5, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: `Too many booking requests from this phone number. Please wait ${rateLimit.retryAfterSeconds} seconds before trying again or call our clinic directly.`,
+    };
+  }
+
+  // 4. Server-side Slot Availability Verification (Race condition prevention)
   const isAvailable = await checkSlotAvailable(preferredDate, preferredTime);
   if (!isAvailable) {
     return {
@@ -200,7 +211,7 @@ export async function createBooking(rawInput: BookingInput): Promise<BookingResu
   }
 
   try {
-    // 4. Find or create patient record by phone number
+    // 5. Find or create patient record by phone number
     let patientId: string | null = null;
 
     const { data: existingPatient, error: patientLookupError } = await supabase
@@ -236,6 +247,16 @@ export async function createBooking(rawInput: BookingInput): Promise<BookingResu
       patientId = newPatient.id;
     }
 
+    // 6. Idempotency Check: Prevent duplicate bookings if submitted repeatedly
+    const { data: duplicateAppt } = await supabase
+      .from("appointments")
+      .select("id, reference_code")
+      .eq("patient_id", patientId)
+      .eq("appointment_date", preferredDate)
+      .eq("appointment_time", preferredTime)
+      .neq("status", "cancelled")
+      .maybeSingle();
+
     // Lookup service details to get duration and human-readable name
     const { data: serviceRow } = await supabase
       .from("services")
@@ -245,6 +266,21 @@ export async function createBooking(rawInput: BookingInput): Promise<BookingResu
 
     const durationMinutes = serviceRow?.duration_minutes || 30;
     const serviceName = serviceRow?.name_en || "Dental Service";
+
+    if (duplicateAppt) {
+      return {
+        success: true,
+        referenceCode: duplicateAppt.reference_code,
+        message: `Your appointment request (${duplicateAppt.reference_code}) has already been recorded! Our team will contact you shortly to confirm.`,
+        appointmentDetails: {
+          serviceName,
+          appointmentDate: preferredDate,
+          appointmentTime: preferredTime,
+          patientName,
+          patientPhone,
+        },
+      };
+    }
 
     // Lookup primary active clinic ID
     const { data: clinicRow } = await supabase

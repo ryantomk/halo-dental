@@ -1,4 +1,4 @@
-import { requireAdminSession } from "@/lib/admin/auth";
+import { requireRole } from "@/lib/admin/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import SettingsClient from "@/components/admin/SettingsClient";
 
@@ -9,7 +9,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  const session = await requireAdminSession();
+  const session = await requireRole(["admin"]);
   const adminClient = createAdminClient();
 
   const clinicId = session.staffUser.clinic_id || "22c7e5ce-340d-4c33-a83f-dda41af69843";

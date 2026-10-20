@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminSession, logAdminAction } from "@/lib/admin/auth";
+import { checkRateLimit } from "@/lib/security/rateLimiter";
 import {
   patientSchema,
   adminAppointmentSchema,
@@ -41,6 +42,15 @@ export async function adminLogin(prevState: any, formData: FormData) {
 
   if (!email || !password) {
     return { error: "Please provide both email and password." };
+  }
+
+  // Rate limiting: 5 login attempts per 15 minutes per email
+  const cleanEmail = email.trim().toLowerCase();
+  const rateLimit = checkRateLimit(`login:${cleanEmail}`, 5, 15 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return {
+      error: `Too many login attempts. Please wait ${rateLimit.retryAfterSeconds} seconds before trying again.`,
+    };
   }
 
   try {
@@ -210,6 +220,11 @@ export async function updatePatientAction(id: string, rawInput: PatientInput) {
 
 export async function deletePatientAction(id: string) {
   const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can permanently delete patient records." };
+  }
+
   const adminClient = createAdminClient();
 
   // Safety check: ensure patient has no non-cancelled appointments
@@ -345,6 +360,53 @@ export async function updateAppointmentStatusAction(
 ) {
   const session = await requireAdminSession();
   const adminClient = createAdminClient();
+
+  // Fetch current appointment
+  const { data: currentAppt, error: fetchErr } = await adminClient
+    .from("appointments")
+    .select("status")
+    .eq("id", appointmentId)
+    .maybeSingle();
+
+  if (fetchErr || !currentAppt) {
+    return { success: false, error: "Appointment record not found." };
+  }
+
+  // Idempotency: if already in requested status, just update notes if provided
+  if (currentAppt.status === status) {
+    if (adminNotes !== undefined) {
+      await adminClient
+        .from("appointments")
+        .update({ admin_notes: adminNotes, updated_at: new Date().toISOString() })
+        .eq("id", appointmentId);
+    }
+    return { success: true };
+  }
+
+  // Clinical status state machine validation
+  const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["completed", "cancelled", "no_show", "pending"],
+    completed: ["confirmed"], // admin reopening only
+    cancelled: ["pending", "confirmed"],
+    no_show: ["pending", "confirmed", "cancelled"],
+  };
+
+  const allowed = ALLOWED_TRANSITIONS[currentAppt.status] || [];
+  if (!allowed.includes(status)) {
+    return {
+      success: false,
+      error: `Invalid status transition: Cannot change an appointment from "${currentAppt.status}" to "${status}".`,
+    };
+  }
+
+  // Modifying or reopening completed clinical records requires administrator privileges
+  if (currentAppt.status === "completed" && session.staffUser.role !== "admin") {
+    return {
+      success: false,
+      error: "Unauthorized. Only administrators can modify or reopen completed appointments.",
+    };
+  }
 
   const updatePayload: {
     status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
@@ -668,6 +730,11 @@ export async function saveServiceAction(id: string | null, rawInput: ServiceForm
 
 export async function deleteServiceAction(id: string) {
   const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can delete clinic services." };
+  }
+
   const adminClient = createAdminClient();
 
   const { error } = await adminClient.from("services").delete().eq("id", id);
@@ -815,6 +882,11 @@ export async function updateTestimonialModerationAction(id: string, isApproved: 
 
 export async function deleteTestimonialAction(id: string) {
   const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can delete patient testimonials." };
+  }
+
   const adminClient = createAdminClient();
 
   const { error } = await adminClient.from("testimonials").delete().eq("id", id);
@@ -936,11 +1008,46 @@ export async function toggleGalleryItemPublishAction(id: string, isPublished: bo
 
 export async function deleteGalleryItemAction(id: string) {
   const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can delete gallery items." };
+  }
+
   const adminClient = createAdminClient();
+
+  // Fetch item before deletion to safely clean up storage objects
+  const { data: item } = await adminClient
+    .from("gallery_items")
+    .select("before_image_url, after_image_url")
+    .eq("id", id)
+    .maybeSingle();
 
   const { error } = await adminClient.from("gallery_items").delete().eq("id", id);
   if (error) {
     return { success: false, error: "Failed to delete gallery item." };
+  }
+
+  // Clean up associated storage files in clinic-public if present
+  if (item) {
+    const urlsToDelete = [item.before_image_url, item.after_image_url].filter(Boolean);
+    const filesToRemove: string[] = [];
+
+    for (const url of urlsToDelete) {
+      if (url && url.includes("/clinic-public/")) {
+        const parts = url.split("/clinic-public/");
+        if (parts[1]) {
+          filesToRemove.push(decodeURIComponent(parts[1]));
+        }
+      }
+    }
+
+    if (filesToRemove.length > 0) {
+      try {
+        await adminClient.storage.from("clinic-public").remove(filesToRemove);
+      } catch (cleanErr) {
+        console.warn("[deleteGalleryItemAction] Storage cleanup warning:", cleanErr);
+      }
+    }
   }
 
   await logAdminAction({
@@ -1088,6 +1195,11 @@ export async function toggleBlogPostStatusAction(id: string, status: "published"
 
 export async function deleteBlogPostAction(id: string) {
   const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can delete blog articles." };
+  }
+
   const adminClient = createAdminClient();
 
   const { error } = await adminClient.from("blog_posts").delete().eq("id", id);
@@ -1109,8 +1221,66 @@ export async function deleteBlogPostAction(id: string) {
 }
 
 // ============================================================================
-// 9. IMAGE UPLOAD
+// 9. IMAGE UPLOAD & MAGIC BYTES VERIFICATION
 // ============================================================================
+
+/**
+ * Validates actual binary file signatures (magic bytes) to prevent spoofed uploads,
+ * polyglots, and embedded script attacks.
+ */
+function validateImageMagicBytes(buffer: Buffer): { isValid: boolean; detectedMime?: string } {
+  if (buffer.length < 12) return { isValid: false };
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return { isValid: true, detectedMime: "image/jpeg" };
+  }
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return { isValid: true, detectedMime: "image/png" };
+  }
+
+  // WebP: RIFF (bytes 0-3) and WEBP (bytes 8-11)
+  if (
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return { isValid: true, detectedMime: "image/webp" };
+  }
+
+  // SVG: Check if text starts with <?xml or <svg and contains no dangerous script tags
+  const header = buffer.subarray(0, 1000).toString("utf8").trim().toLowerCase();
+  if (header.includes("<svg") || header.includes("<?xml")) {
+    const fullText = buffer.toString("utf8").toLowerCase();
+    const dangerousPatterns = [
+      "<script",
+      "javascript:",
+      "onload=",
+      "onerror=",
+      "onclick=",
+      "onmouseover=",
+      "<foreignobject",
+    ];
+    for (const pattern of dangerousPatterns) {
+      if (fullText.includes(pattern)) {
+        return { isValid: false };
+      }
+    }
+    return { isValid: true, detectedMime: "image/svg+xml" };
+  }
+
+  return { isValid: false };
+}
 
 export async function uploadAdminImageAction(
   formData: FormData
@@ -1128,35 +1298,36 @@ export async function uploadAdminImageAction(
       return { success: false, error: "Image file size exceeds the 10MB limit." };
     }
 
-    // Determine and normalize MIME type
-    let mimeType = file.type?.toLowerCase();
-    const ext = file.name.split(".").pop()?.toLowerCase() || "";
-
-    if (!mimeType || mimeType === "image/jpg" || mimeType === "image/pjpeg" || mimeType === "application/octet-stream") {
-      if (ext === "jpg" || ext === "jpeg") mimeType = "image/jpeg";
-      else if (ext === "png") mimeType = "image/png";
-      else if (ext === "webp") mimeType = "image/webp";
-      else if (ext === "svg") mimeType = "image/svg+xml";
-    }
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
-    if (!allowedTypes.includes(mimeType)) {
-      return { success: false, error: "Unsupported format. Please upload a JPG, PNG, WebP, or SVG." };
-    }
-
-    const adminClient = createAdminClient();
-    const cleanExt = ["jpg", "jpeg", "png", "webp", "svg"].includes(ext)
-      ? (ext === "jpeg" ? "jpg" : ext)
-      : (mimeType === "image/jpeg" ? "jpg" : mimeType === "image/png" ? "png" : mimeType === "image/svg+xml" ? "svg" : "webp");
-
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${cleanExt}`;
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    // Verify true magic bytes and detect content type independently of client header
+    const magicCheck = validateImageMagicBytes(buffer);
+    if (!magicCheck.isValid || !magicCheck.detectedMime) {
+      return {
+        success: false,
+        error: "Invalid file content. File does not match an allowed genuine image format (JPEG, PNG, WebP, or clean SVG).",
+      };
+    }
+
+    const verifiedMime = magicCheck.detectedMime;
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const cleanExt =
+      verifiedMime === "image/jpeg"
+        ? "jpg"
+        : verifiedMime === "image/png"
+        ? "png"
+        : verifiedMime === "image/svg+xml"
+        ? "svg"
+        : "webp";
+
+    const adminClient = createAdminClient();
+    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${cleanExt}`;
 
     const { error: uploadErr } = await adminClient.storage
       .from("clinic-public")
       .upload(fileName, buffer, {
-        contentType: mimeType,
+        contentType: verifiedMime,
         upsert: true,
       });
 
@@ -1172,7 +1343,7 @@ export async function uploadAdminImageAction(
       action: "storage.upload",
       entityType: "storage.objects",
       entityId: fileName,
-      details: { folder, size: file.size, type: mimeType },
+      details: { folder, size: file.size, type: verifiedMime },
     });
 
     return { success: true, url: pubData.publicUrl };
@@ -1188,6 +1359,11 @@ export async function uploadAdminImageAction(
 
 export async function updateClinicContactAction(data: ClinicSettingsInput) {
   const session = await requireAdminSession();
+
+  if (session.staffUser.role !== "admin") {
+    return { success: false, error: "Unauthorized. Only administrators can update clinic settings." };
+  }
+
   const validation = clinicSettingsSchema.safeParse(data);
 
   if (!validation.success) {

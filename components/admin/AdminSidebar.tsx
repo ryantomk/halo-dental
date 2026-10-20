@@ -73,7 +73,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "TEAM & SETTINGS",
     items: [
       { label: "Staff", href: "/admin/staff", icon: UserCog, adminOnly: true },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "Settings", href: "/admin/settings", icon: Settings, adminOnly: true },
     ],
   },
 ];
