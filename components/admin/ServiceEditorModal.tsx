@@ -64,6 +64,7 @@ export default function ServiceEditorModal({
   const [sortOrder, setSortOrder] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -282,6 +283,7 @@ export default function ServiceEditorModal({
               onChange={setImageUrl}
               folder="services"
               aspectRatio="video"
+              onUploadingChange={setIsUploadingImage}
             />
           </div>
 
@@ -325,7 +327,7 @@ export default function ServiceEditorModal({
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                disabled={submitting}
+                disabled={submitting || isUploadingImage}
                 onClick={onClose}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors disabled:opacity-50"
               >
@@ -333,10 +335,15 @@ export default function ServiceEditorModal({
               </button>
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || isUploadingImage}
                 className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 active:bg-teal-800 rounded-xl shadow-xs transition-colors disabled:opacity-60 cursor-pointer"
               >
-                {submitting ? (
+                {isUploadingImage ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Uploading Photo...</span>
+                  </>
+                ) : submitting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Saving Service...</span>

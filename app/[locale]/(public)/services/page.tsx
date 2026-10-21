@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import {
   Anchor,
@@ -47,6 +48,7 @@ interface ServiceStatic {
   short_description_ml?: string | null;
   description_en?: string | null;
   description_ml?: string | null;
+  image_url?: string | null;
 }
 
 interface ServiceDbRow {
@@ -59,6 +61,7 @@ interface ServiceDbRow {
   short_description_ml: string | null;
   description_en: string | null;
   description_ml: string | null;
+  image_url?: string | null;
   sort_order: number;
 }
 
@@ -117,7 +120,7 @@ async function getPublicServices(): Promise<(ServiceDbRow | ServiceStatic)[]> {
 
     const { data, error } = await supabase
       .from("services")
-      .select("id, slug, name_en, name_ml, category, short_description_en, short_description_ml, description_en, description_ml, sort_order")
+      .select("id, slug, name_en, name_ml, category, short_description_en, short_description_ml, description_en, description_ml, image_url, sort_order")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
 
@@ -215,9 +218,22 @@ export default async function Page({
                     href={`${prefix}/services/${service.slug}`}
                     className="group flex h-full flex-col rounded-lg border border-brand-charcoal/10 bg-brand-ivory p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:p-7"
                   >
-                    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-gold/10">
-                      <Icon className="h-6 w-6 text-brand-gold" aria-hidden="true" />
-                    </span>
+                    {service.image_url ? (
+                      <div className="relative mb-4 h-48 w-full overflow-hidden rounded-md bg-brand-charcoal/5">
+                        <Image
+                          src={service.image_url}
+                          alt={displayName}
+                          fill
+                          unoptimized
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      </div>
+                    ) : (
+                      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-gold/10">
+                        <Icon className="h-6 w-6 text-brand-gold" aria-hidden="true" />
+                      </span>
+                    )}
 
                     <h3 className="mt-5 font-display text-xl text-brand-charcoal">
                       {displayName}

@@ -262,6 +262,7 @@ export default function ServicesClient({ initialServices }: ServicesClientProps)
                               src={svc.image_url}
                               alt={svc.name_en}
                               fill
+                              unoptimized
                               className="object-cover"
                               sizes="48px"
                             />

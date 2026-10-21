@@ -40,6 +40,7 @@ export default function ServicePreviewModal({
                 src={service.image_url}
                 alt={service.name_en || "Service image"}
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 600px"
               />

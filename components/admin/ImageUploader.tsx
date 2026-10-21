@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type DragEvent, type ChangeEvent } from "react";
+import { useState, useRef, useId, type DragEvent, type ChangeEvent } from "react";
 import Image from "next/image";
 import { uploadAdminImageAction } from "@/app/actions/admin";
 import {
@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  Link as LinkIcon,
+  Upload,
 } from "lucide-react";
 
 interface ImageUploaderProps {
@@ -43,6 +45,9 @@ export default function ImageUploader({
   maxSizeMb = 10,
   onUploadingChange,
 }: ImageUploaderProps) {
+  const inputId = useId();
+  const [mode, setMode] = useState<"upload" | "url">("upload");
+  const [urlInput, setUrlInput] = useState(value || "");
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -100,6 +105,7 @@ export default function ImageUploader({
         setErrorMessage(result.error || "Failed to upload image. Please try again.");
       } else {
         onChange(result.url);
+        setUrlInput(result.url);
         setFileMeta({
           name: file.name,
           size: formatBytes(file.size),
@@ -123,17 +129,17 @@ export default function ImageUploader({
     }
   }
 
-  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+  function handleDragOver(e: DragEvent<HTMLLabelElement>) {
     e.preventDefault();
     setIsDragging(true);
   }
 
-  function handleDragLeave(e: DragEvent<HTMLDivElement>) {
+  function handleDragLeave(e: DragEvent<HTMLLabelElement>) {
     e.preventDefault();
     setIsDragging(false);
   }
 
-  function handleDrop(e: DragEvent<HTMLDivElement>) {
+  function handleDrop(e: DragEvent<HTMLLabelElement>) {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
@@ -144,37 +150,62 @@ export default function ImageUploader({
 
   function handleRemove() {
     onChange(null);
+    setUrlInput("");
     setFileMeta(null);
     setErrorMessage("");
     setLastSelectedFile(null);
   }
 
-  function handleRetry() {
-    if (lastSelectedFile) {
-      handleFileUpload(lastSelectedFile);
-    } else {
-      fileInputRef.current?.click();
+  function handleApplyUrl() {
+    const trimmed = urlInput.trim();
+    if (!trimmed) {
+      handleRemove();
+      return;
     }
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://") && !trimmed.startsWith("/")) {
+      setErrorMessage("Please enter a valid image URL starting with https:// or http://");
+      return;
+    }
+    setErrorMessage("");
+    onChange(trimmed);
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between">
         {label && (
           <label className="block text-xs font-semibold text-slate-700 tracking-tight">
             {label}
           </label>
         )}
-        {fileMeta && value && (
-          <span className="text-[11px] text-slate-400 font-normal truncate max-w-[200px]" title={fileMeta.name}>
-            {fileMeta.name} ({fileMeta.size})
-          </span>
-        )}
+        <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px] font-medium text-slate-600">
+          <button
+            type="button"
+            onClick={() => setMode("upload")}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md transition-colors ${
+              mode === "upload" ? "bg-white text-slate-900 font-semibold shadow-2xs" : "hover:text-slate-900"
+            }`}
+          >
+            <Upload className="w-3 h-3" />
+            <span>Upload File</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("url")}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md transition-colors ${
+              mode === "url" ? "bg-white text-slate-900 font-semibold shadow-2xs" : "hover:text-slate-900"
+            }`}
+          >
+            <LinkIcon className="w-3 h-3" />
+            <span>Image URL</span>
+          </button>
+        </div>
       </div>
 
-      {/* Hidden file input */}
+      {/* Hidden native file input */}
       <input
         ref={fileInputRef}
+        id={inputId}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/svg+xml,.jpg,.jpeg,.png,.webp,.svg"
         onChange={handleFileChange}
@@ -184,28 +215,38 @@ export default function ImageUploader({
       />
 
       {value ? (
-        /* Preview View */
+        /* Preview View with unoptimized image to prevent Next.js image domain errors */
         <div className={`relative ${aspectClass} rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 group shadow-xs`}>
           <Image
             src={value}
             alt={label}
             fill
+            unoptimized
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 400px"
           />
 
           {/* Action Overlay */}
           <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center gap-2 p-3">
-            <button
-              type="button"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-white text-slate-800 text-xs font-semibold rounded-xl transition-colors shadow-sm"
-              title="Replace image"
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
-              <span>Replace</span>
-            </button>
+            {mode === "upload" ? (
+              <label
+                htmlFor={inputId}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-white text-slate-800 text-xs font-semibold rounded-xl transition-colors shadow-sm cursor-pointer"
+                title="Replace image"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
+                <span>Replace</span>
+              </label>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setUrlInput(value)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-white text-slate-800 text-xs font-semibold rounded-xl transition-colors shadow-sm"
+              >
+                <LinkIcon className="w-3.5 h-3.5 text-teal-600" />
+                <span>Edit URL</span>
+              </button>
+            )}
             <button
               type="button"
               disabled={uploading}
@@ -221,17 +262,49 @@ export default function ImageUploader({
           <div className="absolute bottom-2 left-2 pointer-events-none">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/90 text-white backdrop-blur-xs">
               <CheckCircle2 className="w-3 h-3" />
-              Uploaded
+              Photo Attached
             </span>
           </div>
         </div>
+      ) : mode === "url" ? (
+        /* Direct URL Input Mode */
+        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
+          <label className="block text-[11px] font-semibold text-slate-600">
+            Paste Direct Image URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleApplyUrl();
+                }
+              }}
+              placeholder="https://example.com/photo.jpg or Supabase CDN URL"
+              className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
+            />
+            <button
+              type="button"
+              onClick={handleApplyUrl}
+              className="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors shrink-0 shadow-xs"
+            >
+              Set Photo
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-normal">
+            Paste any direct link to an image on the web or Supabase Storage.
+          </p>
+        </div>
       ) : (
-        /* Empty Upload Dropzone */
-        <div
+        /* Empty Upload Dropzone with Native Label Binding */
+        <label
+          htmlFor={inputId}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !uploading && fileInputRef.current?.click()}
           className={`relative ${aspectClass} flex flex-col items-center justify-center text-center p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer select-none ${
             isDragging
               ? "border-teal-500 bg-teal-50/50 scale-[1.01]"
@@ -260,7 +333,7 @@ export default function ImageUploader({
               <p className="text-[11px] text-slate-400 max-w-xs">{helperText}</p>
             </div>
           )}
-        </div>
+        </label>
       )}
 
       {errorMessage && (
@@ -271,7 +344,13 @@ export default function ImageUploader({
           </div>
           <button
             type="button"
-            onClick={handleRetry}
+            onClick={() => {
+              if (lastSelectedFile) {
+                handleFileUpload(lastSelectedFile);
+              } else {
+                setErrorMessage("");
+              }
+            }}
             className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-[11px] font-semibold transition-colors shrink-0"
           >
             <RefreshCw className="w-3 h-3" />
@@ -282,4 +361,3 @@ export default function ImageUploader({
     </div>
   );
 }
-

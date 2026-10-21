@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { ArrowRight, Calendar, CheckCircle2, MessageCircle, Phone, ShieldCheck, Sparkles } from "lucide-react";
@@ -216,6 +217,19 @@ export default async function ServiceDetailPage({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
+              {service.image_url && (
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-brand-charcoal/10 bg-brand-linen shadow-sm mb-6">
+                  <Image
+                    src={service.image_url}
+                    alt={displayName}
+                    fill
+                    unoptimized
+                    priority
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 800px"
+                  />
+                </div>
+              )}
               <h2 className="font-display text-2xl font-medium text-brand-charcoal sm:text-3xl">
                 {isMl ? "ചികിത്സാ വിവരങ്ങൾ" : "About This Treatment"}
               </h2>

@@ -96,12 +96,18 @@ export async function logAdminAction(params: {
 }) {
   try {
     const supabase = createAdminClient();
+    const isUuid = params.entityId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.entityId);
+    const enrichedDetails = {
+      ...(params.details || {}),
+      ...(!isUuid && params.entityId ? { entityIdentifier: params.entityId } : {}),
+    };
+
     await supabase.from("audit_logs").insert({
       staff_user_id: params.staffUserId || null,
       action: params.action,
       entity_type: params.entityType,
-      entity_id: params.entityId || null,
-      details: (params.details || {}) as any,
+      entity_id: isUuid ? params.entityId : null,
+      details: enrichedDetails as any,
       ip_address: params.ipAddress || null,
     });
   } catch (err) {

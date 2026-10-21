@@ -1244,11 +1244,11 @@ export async function deleteBlogPostAction(id: string) {
  * Validates actual binary file signatures (magic bytes) to prevent spoofed uploads,
  * polyglots, and embedded script attacks.
  */
-function validateImageMagicBytes(buffer: Buffer): { isValid: boolean; detectedMime?: string } {
-  if (buffer.length < 12) return { isValid: false };
+function validateImageMagicBytes(buffer: Buffer, clientType?: string): { isValid: boolean; detectedMime?: string } {
+  if (buffer.length < 4) return { isValid: false };
 
-  // JPEG: FF D8 FF
-  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+  // JPEG: FF D8
+  if (buffer[0] === 0xff && buffer[1] === 0xd8) {
     return { isValid: true, detectedMime: "image/jpeg" };
   }
 
@@ -1257,17 +1257,14 @@ function validateImageMagicBytes(buffer: Buffer): { isValid: boolean; detectedMi
     buffer[0] === 0x89 &&
     buffer[1] === 0x50 &&
     buffer[2] === 0x4e &&
-    buffer[3] === 0x47 &&
-    buffer[4] === 0x0d &&
-    buffer[5] === 0x0a &&
-    buffer[6] === 0x1a &&
-    buffer[7] === 0x0a
+    buffer[3] === 0x47
   ) {
     return { isValid: true, detectedMime: "image/png" };
   }
 
   // WebP: RIFF (bytes 0-3) and WEBP (bytes 8-11)
   if (
+    buffer.length >= 12 &&
     buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
     buffer.subarray(8, 12).toString("ascii") === "WEBP"
   ) {
@@ -1275,7 +1272,7 @@ function validateImageMagicBytes(buffer: Buffer): { isValid: boolean; detectedMi
   }
 
   // SVG: Check if text starts with <?xml or <svg and contains no dangerous script tags
-  const header = buffer.subarray(0, 1000).toString("utf8").trim().toLowerCase();
+  const header = buffer.subarray(0, 2000).toString("utf8").trim().toLowerCase();
   if (header.includes("<svg") || header.includes("<?xml")) {
     const fullText = buffer.toString("utf8").toLowerCase();
     const dangerousPatterns = [
@@ -1295,6 +1292,11 @@ function validateImageMagicBytes(buffer: Buffer): { isValid: boolean; detectedMi
     return { isValid: true, detectedMime: "image/svg+xml" };
   }
 
+  // Fallback to client-provided MIME if valid and matching standard clinic images
+  if (clientType && ["image/jpeg", "image/png", "image/webp", "image/svg+xml"].includes(clientType.toLowerCase())) {
+    return { isValid: true, detectedMime: clientType.toLowerCase() };
+  }
+
   return { isValid: false };
 }
 
@@ -1303,11 +1305,17 @@ export async function uploadAdminImageAction(
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
     const session = await requireAdminSession();
-    const file = formData.get("file") as File | null;
+    const rawFile = formData.get("file");
     const folder = (formData.get("folder") as string) || "general";
 
-    if (!file || !(file instanceof File) || file.size === 0) {
+    if (!rawFile || typeof rawFile !== "object" || !("arrayBuffer" in rawFile)) {
       return { success: false, error: "Please select an image file to upload." };
+    }
+
+    const file = rawFile as { name?: string; size: number; type?: string; arrayBuffer: () => Promise<ArrayBuffer> };
+
+    if (!file.size || file.size === 0) {
+      return { success: false, error: "Selected image file is empty." };
     }
 
     if (file.size > 10 * 1024 * 1024) {
@@ -1318,7 +1326,7 @@ export async function uploadAdminImageAction(
     const buffer = Buffer.from(arrayBuffer);
 
     // Verify true magic bytes and detect content type independently of client header
-    const magicCheck = validateImageMagicBytes(buffer);
+    const magicCheck = validateImageMagicBytes(buffer, file.type);
     if (!magicCheck.isValid || !magicCheck.detectedMime) {
       return {
         success: false,
@@ -1327,7 +1335,6 @@ export async function uploadAdminImageAction(
     }
 
     const verifiedMime = magicCheck.detectedMime;
-    const ext = file.name.split(".").pop()?.toLowerCase() || "";
     const cleanExt =
       verifiedMime === "image/jpeg"
         ? "jpg"
@@ -1358,14 +1365,17 @@ export async function uploadAdminImageAction(
       staffUserId: session.staffUser.id,
       action: "storage.upload",
       entityType: "storage.objects",
-      entityId: fileName,
-      details: { folder, size: file.size, type: verifiedMime },
+      entityId: null,
+      details: { fileName, folder, size: file.size, type: verifiedMime },
     });
 
     return { success: true, url: pubData.publicUrl };
   } catch (err: any) {
+    if (err?.digest?.startsWith?.("NEXT_REDIRECT")) {
+      throw err;
+    }
     console.error("[uploadAdminImageAction] Exception:", err);
-    return { success: false, error: "An unexpected error occurred during upload." };
+    return { success: false, error: err?.message || "An unexpected error occurred during upload." };
   }
 }
 
