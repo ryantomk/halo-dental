@@ -7,12 +7,17 @@ import { createClient } from "@supabase/supabase-js";
 import { defaultLocale } from "@/lib/i18n";
 import { constructMetadata, generateBreadcrumbJsonLd, generateServiceJsonLd } from "@/lib/seo";
 
+export const dynamicParams = true;
+export const revalidate = 60;
+
 interface ServiceRecord {
   id: string;
   slug: string;
-  name: string;
+  name_en: string;
   name_ml: string | null;
-  description: string | null;
+  short_description_en: string | null;
+  short_description_ml: string | null;
+  description_en: string | null;
   description_ml: string | null;
   category: string | null;
   price_starting_at: number | null;
@@ -77,16 +82,16 @@ export async function generateMetadata({
     });
   }
 
-  const name = (locale === "ml" && service.name_ml) ? service.name_ml : service.name;
+  const name = (locale === "ml" && service.name_ml) ? service.name_ml : service.name_en;
   const desc =
-    (locale === "ml" && service.description_ml)
-      ? service.description_ml
-      : service.description ||
+    (locale === "ml" && (service.description_ml || service.short_description_ml))
+      ? (service.description_ml || service.short_description_ml)
+      : (service.description_en || service.short_description_en) ||
         `Learn more about ${name} at Halo Dental Cosmetic & Orthodontic Centre in Angadipuram, Malappuram.`;
 
   return constructMetadata({
     title: `${name} in Angadipuram, Malappuram | Halo Dental`,
-    description: desc,
+    description: desc || `Learn more about ${name} at Halo Dental.`,
     path: `/services/${slug}`,
     locale,
   });
@@ -113,11 +118,11 @@ export default async function ServiceDetailPage({
   const prefix = locale === defaultLocale ? "" : `/${locale}`;
   const isMl = locale === "ml";
 
-  const displayName = isMl && service.name_ml ? service.name_ml : service.name;
+  const displayName = isMl && service.name_ml ? service.name_ml : service.name_en;
   const displayDesc =
-    isMl && service.description_ml
-      ? service.description_ml
-      : service.description ||
+    isMl && (service.description_ml || service.short_description_ml)
+      ? (service.description_ml || service.short_description_ml)
+      : (service.description_en || service.short_description_en) ||
         "Expert dental care delivered with clinical precision and gentle patient-first attention.";
 
   const breadcrumbs = [
@@ -129,8 +134,8 @@ export default async function ServiceDetailPage({
   const breadcrumbJsonLd = generateBreadcrumbJsonLd(breadcrumbs);
 
   const serviceJsonLd = generateServiceJsonLd({
-    name: service.name,
-    description: service.description || displayDesc,
+    name: service.name_en,
+    description: service.description_en || service.short_description_en || displayDesc || "Dental care at Halo Dental",
     slug: service.slug,
     category: service.category || "DentalCare",
     priceStartingAt: service.price_starting_at,

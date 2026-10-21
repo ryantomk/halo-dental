@@ -46,6 +46,11 @@ export default function ServicesClient({ initialServices }: ServicesClientProps)
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Keep client services list in sync when initialServices changes (from server revalidation)
+  useEffect(() => {
+    setServices(initialServices);
+  }, [initialServices]);
+
   // Auto-open new modal if navigated via ?new=1
   useEffect(() => {
     if (searchParams.get("new") === "1") {
@@ -377,8 +382,20 @@ export default function ServicesClient({ initialServices }: ServicesClientProps)
           setSelectedService(null);
         }}
         service={selectedService}
-        onSuccess={() => {
-          window.location.reload();
+        onSuccess={(savedService) => {
+          if (savedService) {
+            setServices((prev) => {
+              const exists = prev.some((s) => s.id === savedService.id);
+              if (exists) {
+                return prev.map((s) => (s.id === savedService.id ? savedService : s));
+              }
+              return [savedService, ...prev];
+            });
+            setFeedbackMessage({
+              type: "success",
+              text: `✓ Service "${savedService.name_en}" saved successfully.`,
+            });
+          }
         }}
       />
 

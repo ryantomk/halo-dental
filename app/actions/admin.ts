@@ -695,14 +695,26 @@ export async function saveServiceAction(id: string | null, rawInput: ServiceForm
     updated_at: new Date().toISOString(),
   };
 
+  let savedService: any = null;
+
   if (id) {
-    const { error } = await adminClient.from("services").update(payload).eq("id", id);
+    const { data: updated, error } = await adminClient
+      .from("services")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
     if (error) {
       console.error("[saveServiceAction update] Error:", error);
       return { success: false, error: "Failed to update service. Please try again." };
     }
+    savedService = updated;
   } else {
-    const { error } = await adminClient.from("services").insert(payload);
+    const { data: inserted, error } = await adminClient
+      .from("services")
+      .insert(payload)
+      .select()
+      .single();
     if (error) {
       console.error("[saveServiceAction insert] Error:", error);
       if (error.code === "23505") {
@@ -710,14 +722,17 @@ export async function saveServiceAction(id: string | null, rawInput: ServiceForm
       }
       return { success: false, error: "Failed to create service. Please verify the information." };
     }
+    savedService = inserted;
   }
+
+  const savedId = savedService?.id || id || null;
 
   await logAdminAction({
     staffUserId: session.staffUser.id,
     action: id ? "service.update" : "service.create",
     entityType: "services",
-    entityId: id || slug,
-    details: { name: nameEn, isActive: data.isActive },
+    entityId: savedId,
+    details: { name: nameEn, isActive: data.isActive, slug },
   });
 
   revalidatePath("/admin/services");
@@ -725,8 +740,9 @@ export async function saveServiceAction(id: string | null, rawInput: ServiceForm
   revalidatePath("/ml/services");
   revalidatePath("/booking");
   revalidatePath("/ml/booking");
-  return { success: true };
+  return { success: true, service: savedService };
 }
+
 
 export async function deleteServiceAction(id: string) {
   const session = await requireAdminSession();

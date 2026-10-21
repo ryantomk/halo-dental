@@ -34,20 +34,101 @@ export async function generateMetadata({
   });
 }
 
+import { createClient } from "@supabase/supabase-js";
+
+export const revalidate = 60;
+
 interface ServiceStatic {
   slug: string;
-  icon: LucideIcon;
+  category?: string;
+  name_en: string;
+  name_ml?: string | null;
+  short_description_en?: string | null;
+  short_description_ml?: string | null;
+  description_en?: string | null;
+  description_ml?: string | null;
 }
 
-const SERVICES: ServiceStatic[] = [
-  { slug: "smile-makeovers", icon: Smile },
-  { slug: "clear-aligners", icon: Layers },
-  { slug: "dental-implants", icon: Anchor },
-  { slug: "root-canal-treatment", icon: ShieldCheck },
-  { slug: "teeth-whitening", icon: Sparkles },
-  { slug: "veneers", icon: Sparkles },
-  { slug: "general-dentistry", icon: Stethoscope },
+interface ServiceDbRow {
+  id: string;
+  slug: string;
+  name_en: string;
+  name_ml: string | null;
+  category: string;
+  short_description_en: string | null;
+  short_description_ml: string | null;
+  description_en: string | null;
+  description_ml: string | null;
+  sort_order: number;
+}
+
+const STATIC_FALLBACK_SERVICES: ServiceStatic[] = [
+  { slug: "smile-makeovers", category: "cosmetic", name_en: "Smile Makeovers" },
+  { slug: "clear-aligners", category: "orthodontics", name_en: "Clear Aligners" },
+  { slug: "dental-implants", category: "implants", name_en: "Dental Implants" },
+  { slug: "root-canal-treatment", category: "restorative", name_en: "Root Canal Treatment" },
+  { slug: "teeth-whitening", category: "cosmetic", name_en: "Teeth Whitening" },
+  { slug: "veneers", category: "cosmetic", name_en: "Porcelain Veneers" },
+  { slug: "general-dentistry", category: "general", name_en: "General Dentistry" },
 ];
+
+function getServiceIcon(slug: string, category?: string | null): LucideIcon {
+  switch (slug) {
+    case "smile-makeovers":
+      return Smile;
+    case "clear-aligners":
+      return Layers;
+    case "dental-implants":
+      return Anchor;
+    case "root-canal-treatment":
+      return ShieldCheck;
+    case "teeth-whitening":
+    case "veneers":
+      return Sparkles;
+    case "general-dentistry":
+      return Stethoscope;
+  }
+  switch (category) {
+    case "cosmetic":
+      return Sparkles;
+    case "orthodontics":
+      return Layers;
+    case "implants":
+      return Anchor;
+    case "restorative":
+      return ShieldCheck;
+    case "pediatric":
+      return Smile;
+    case "general":
+    default:
+      return Stethoscope;
+  }
+}
+
+async function getPublicServices(): Promise<(ServiceDbRow | ServiceStatic)[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return STATIC_FALLBACK_SERVICES;
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false },
+    });
+
+    const { data, error } = await supabase
+      .from("services")
+      .select("id, slug, name_en, name_ml, category, short_description_en, short_description_ml, description_en, description_ml, sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      return STATIC_FALLBACK_SERVICES;
+    }
+    return data as ServiceDbRow[];
+  } catch {
+    return STATIC_FALLBACK_SERVICES;
+  }
+}
 
 export default async function Page({
   params,
@@ -60,6 +141,8 @@ export default async function Page({
   const t = await getTranslations("services");
   const tCta = await getTranslations("cta");
   const prefix = locale === defaultLocale ? "" : `/${locale}`;
+
+  const services = await getPublicServices();
 
   return (
     <main>
@@ -99,34 +182,62 @@ export default async function Page({
       <section aria-label="All services" className="bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
-            {SERVICES.map((service) => (
-              <li key={service.slug}>
-                <Link
-                  href={`${prefix}/services/${service.slug}`}
-                  className="group flex h-full flex-col rounded-lg border border-brand-charcoal/10 bg-brand-ivory p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:p-7"
-                >
-                  <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-gold/10">
-                    <service.icon className="h-6 w-6 text-brand-gold" aria-hidden="true" />
-                  </span>
+            {services.map((service) => {
+              const Icon = getServiceIcon(service.slug, service.category);
 
-                  <h3 className="mt-5 font-display text-xl text-brand-charcoal">
-                    {t(`items.${service.slug}.name` as any)}
-                  </h3>
+              let displayName = locale === "ml" && service.name_ml ? service.name_ml : service.name_en;
+              try {
+                if (t.has(`items.${service.slug}.name`)) {
+                  displayName = locale === "ml"
+                    ? (service.name_ml || t(`items.${service.slug}.name` as any))
+                    : (t(`items.${service.slug}.name` as any) || service.name_en);
+                }
+              } catch {
+                // Keep database name fallback
+              }
 
-                  <p className="mt-2 flex-1 text-[15px] leading-relaxed text-brand-charcoal/70">
-                    {t(`items.${service.slug}.description` as any)}
-                  </p>
+              let displayDesc = locale === "ml"
+                ? (service.short_description_ml || service.description_ml || service.short_description_en || service.description_en || "")
+                : (service.short_description_en || service.description_en || "");
+              try {
+                if (t.has(`items.${service.slug}.description`)) {
+                  displayDesc = locale === "ml"
+                    ? (service.short_description_ml || t(`items.${service.slug}.description` as any))
+                    : (service.short_description_en || t(`items.${service.slug}.description` as any));
+                }
+              } catch {
+                // Keep database description fallback
+              }
 
-                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-charcoal">
-                    {t("treatmentDetails")}
-                    <ArrowRight
-                      className="h-4 w-4 text-brand-gold transition-transform group-hover:translate-x-0.5"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </Link>
-              </li>
-            ))}
+              return (
+                <li key={service.slug}>
+                  <Link
+                    href={`${prefix}/services/${service.slug}`}
+                    className="group flex h-full flex-col rounded-lg border border-brand-charcoal/10 bg-brand-ivory p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:p-7"
+                  >
+                    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-gold/10">
+                      <Icon className="h-6 w-6 text-brand-gold" aria-hidden="true" />
+                    </span>
+
+                    <h3 className="mt-5 font-display text-xl text-brand-charcoal">
+                      {displayName}
+                    </h3>
+
+                    <p className="mt-2 flex-1 text-[15px] leading-relaxed text-brand-charcoal/70">
+                      {displayDesc}
+                    </p>
+
+                    <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-charcoal">
+                      {t("treatmentDetails")}
+                      <ArrowRight
+                        className="h-4 w-4 text-brand-gold transition-transform group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </section>

@@ -31,8 +31,9 @@ interface ServiceEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
   service?: ServiceData | null;
-  onSuccess?: () => void;
+  onSuccess?: (savedService?: ServiceData) => void;
 }
+
 
 const CATEGORIES: { label: string; value: ServiceData["category"] }[] = [
   { label: "Cosmetic Dentistry", value: "cosmetic" },
@@ -125,7 +126,7 @@ export default function ServiceEditorModal({
       } else {
         onClose();
         if (onSuccess) {
-          onSuccess();
+          onSuccess(result.service as ServiceData | undefined);
         } else {
           window.location.reload();
         }
