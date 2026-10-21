@@ -271,6 +271,7 @@ export default function GalleryClient({ initialGalleryItems, services }: Gallery
                           src={item.before_image_url}
                           alt="Before"
                           fill
+                          unoptimized
                           className="object-cover"
                           sizes="(max-width: 768px) 50vw, 200px"
                         />
@@ -283,6 +284,7 @@ export default function GalleryClient({ initialGalleryItems, services }: Gallery
                           src={item.after_image_url}
                           alt="After"
                           fill
+                          unoptimized
                           className="object-cover"
                           sizes="(max-width: 768px) 50vw, 200px"
                         />
@@ -297,6 +299,7 @@ export default function GalleryClient({ initialGalleryItems, services }: Gallery
                         src={item.after_image_url || item.before_image_url}
                         alt={item.title_en}
                         fill
+                        unoptimized
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, 400px"
                       />

@@ -85,6 +85,7 @@ export default function BeforeAfterSlider({
             src={afterImage}
             alt={resolvedAfterAlt}
             fill
+            unoptimized
             sizes="(min-width: 1024px) 800px, 100vw"
             className="object-cover"
             priority={false}
@@ -103,6 +104,7 @@ export default function BeforeAfterSlider({
             src={beforeImage}
             alt={resolvedBeforeAlt}
             fill
+            unoptimized
             sizes="(min-width: 1024px) 800px, 100vw"
             className="object-cover"
             priority={false}

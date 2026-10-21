@@ -274,6 +274,7 @@ export default function BlogClient({ initialPosts, doctors }: BlogClientProps) {
                               src={post.cover_image_url}
                               alt={post.title_en}
                               fill
+                              unoptimized
                               className="object-cover"
                               sizes="56px"
                             />

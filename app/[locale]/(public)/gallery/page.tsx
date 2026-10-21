@@ -39,6 +39,8 @@ async function getPublishedGalleryItems(): Promise<GalleryItem[]> {
   return (data as GalleryItem[]) || [];
 }
 
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {
@@ -154,38 +156,59 @@ export default async function GalleryPage({
                 const title = isMl && item.title_ml ? item.title_ml : item.title_en;
                 const desc = isMl && item.description_ml ? item.description_ml : item.description_en;
 
+                const isDual =
+                  item.before_image_url &&
+                  item.after_image_url &&
+                  item.before_image_url !== item.after_image_url;
+
                 return (
                   <div
                     key={item.id}
                     className="flex flex-col overflow-hidden rounded-2xl border border-brand-charcoal/10 bg-white shadow-sm transition-all hover:shadow-md"
                   >
-                    {/* Before and After Image Split */}
-                    <div className="grid grid-cols-2 gap-1 bg-brand-charcoal/5 p-1">
-                      <div className="relative aspect-square overflow-hidden rounded-l-xl bg-brand-charcoal/10">
+                    {isDual ? (
+                      /* Before and After Image Split */
+                      <div className="grid grid-cols-2 gap-1 bg-brand-charcoal/5 p-1">
+                        <div className="relative aspect-square overflow-hidden rounded-l-xl bg-brand-charcoal/10">
+                          <Image
+                            src={item.before_image_url}
+                            alt={`Before treatment: ${title} at Halo Dental`}
+                            fill
+                            unoptimized
+                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+                            className="object-cover"
+                          />
+                          <span className="absolute bottom-2 left-2 rounded bg-brand-charcoal/80 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase backdrop-blur-sm">
+                            {isMl ? "മുമ്പ്" : "Before"}
+                          </span>
+                        </div>
+                        <div className="relative aspect-square overflow-hidden rounded-r-xl bg-brand-charcoal/10">
+                          <Image
+                            src={item.after_image_url}
+                            alt={`After treatment: ${title} at Halo Dental`}
+                            fill
+                            unoptimized
+                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+                            className="object-cover"
+                          />
+                          <span className="absolute bottom-2 right-2 rounded bg-brand-gold/90 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-brand-charcoal uppercase backdrop-blur-sm">
+                            {isMl ? "ശേഷം" : "After"}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Single Normal Showcase Photo */
+                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-brand-charcoal/10">
                         <Image
-                          src={item.before_image_url}
-                          alt={`Before treatment: ${title} at Halo Dental`}
+                          src={item.after_image_url || item.before_image_url}
+                          alt={`${title} at Halo Dental`}
                           fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+                          unoptimized
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
                         />
-                        <span className="absolute bottom-2 left-2 rounded bg-brand-charcoal/80 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase backdrop-blur-sm">
-                          {isMl ? "മുമ്പ്" : "Before"}
-                        </span>
                       </div>
-                      <div className="relative aspect-square overflow-hidden rounded-r-xl bg-brand-charcoal/10">
-                        <Image
-                          src={item.after_image_url}
-                          alt={`After treatment: ${title} at Halo Dental`}
-                          fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
-                          className="object-cover"
-                        />
-                        <span className="absolute bottom-2 right-2 rounded bg-brand-gold/90 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-brand-charcoal uppercase backdrop-blur-sm">
-                          {isMl ? "ശേഷം" : "After"}
-                        </span>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Content Details */}
                     <div className="flex flex-1 flex-col p-6">

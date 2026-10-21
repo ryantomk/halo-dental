@@ -208,6 +208,7 @@ export default async function BlogPostPage({
                 alt={title}
                 fill
                 priority
+                unoptimized
                 sizes="(max-width: 1024px) 100vw, 800px"
                 className="object-cover"
               />

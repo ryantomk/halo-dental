@@ -33,6 +33,8 @@ export async function generateMetadata({
   });
 }
 
+export const revalidate = 60;
+
 export default function Page({
   params,
 }: {
@@ -62,7 +64,7 @@ export default function Page({
       <BeforeAfterSection locale={locale} />
 
       {/* 7. Patient Testimonials Carousel */}
-      <TestimonialsSection />
+      <TestimonialsSection locale={locale} />
 
       {/* 8. Frequently Asked Questions */}
       <FAQSection />

@@ -294,6 +294,7 @@ export default function TestimonialsClient({ initialTestimonials, services }: Te
                           src={t.photo_url}
                           alt={t.patient_name}
                           fill
+                          unoptimized
                           className="object-cover"
                           sizes="32px"
                         />

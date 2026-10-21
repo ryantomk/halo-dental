@@ -52,6 +52,7 @@ export default function BlogPreviewModal({
                 src={post.cover_image_url}
                 alt={post.title_en || "Blog cover"}
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 800px"
               />

@@ -50,6 +50,7 @@ export default function GalleryPreviewModal({
                   src={item.before_image_url!}
                   alt="Before treatment"
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 350px"
                 />
@@ -62,6 +63,7 @@ export default function GalleryPreviewModal({
                   src={item.after_image_url!}
                   alt="After treatment"
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 350px"
                 />
@@ -78,6 +80,7 @@ export default function GalleryPreviewModal({
                   src={item.after_image_url}
                   alt={item.title_en || "Gallery image"}
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 700px"
                 />

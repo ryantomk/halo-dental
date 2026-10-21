@@ -38,6 +38,8 @@ async function getPublishedPosts(): Promise<BlogPost[]> {
   return (data as BlogPost[]) || [];
 }
 
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {
@@ -159,6 +161,7 @@ export default async function BlogIndexPage({
                           src={post.cover_image_url}
                           alt={title}
                           fill
+                          unoptimized
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
                         />

@@ -993,6 +993,8 @@ export async function saveGalleryItemAction(id: string | null, rawInput: Gallery
   revalidatePath("/admin/gallery");
   revalidatePath("/gallery");
   revalidatePath("/ml/gallery");
+  revalidatePath("/");
+  revalidatePath("/ml");
   return { success: true };
 }
 
@@ -1019,6 +1021,8 @@ export async function toggleGalleryItemPublishAction(id: string, isPublished: bo
   revalidatePath("/admin/gallery");
   revalidatePath("/gallery");
   revalidatePath("/ml/gallery");
+  revalidatePath("/");
+  revalidatePath("/ml");
   return { success: true };
 }
 
@@ -1076,6 +1080,8 @@ export async function deleteGalleryItemAction(id: string) {
   revalidatePath("/admin/gallery");
   revalidatePath("/gallery");
   revalidatePath("/ml/gallery");
+  revalidatePath("/");
+  revalidatePath("/ml");
   return { success: true };
 }
 
@@ -1105,10 +1111,21 @@ export async function saveBlogPostAction(id: string | null, rawInput: BlogPostFo
   } = validation.data;
 
   const adminClient = createAdminClient();
-  const slug = title
+  let slug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
+  if (!slug) {
+    slug = `article-${Date.now().toString(36)}`;
+  }
+
+  // Preserve established slug if editing an existing post
+  if (id) {
+    const { data: existing } = await adminClient.from("blog_posts").select("slug").eq("id", id).single();
+    if (existing?.slug) {
+      slug = existing.slug;
+    }
+  }
 
   const payload: {
     title_en: string;
@@ -1154,7 +1171,7 @@ export async function saveBlogPostAction(id: string | null, rawInput: BlogPostFo
     if (error) {
       console.error("[saveBlogPostAction insert] Error:", error);
       if (error.code === "23505") {
-        return { success: false, error: "An article with this title already exists. Please choose a different title." };
+        return { success: false, error: "An article with this title or slug already exists. Please choose a different title." };
       }
       return { success: false, error: "Failed to create article." };
     }
@@ -1164,19 +1181,24 @@ export async function saveBlogPostAction(id: string | null, rawInput: BlogPostFo
     staffUserId: session.staffUser.id,
     action: id ? `blog.update` : `blog.create_${status}`,
     entityType: "blog_posts",
-    entityId: id || slug,
-    details: { title, status },
+    entityId: id || null,
+    details: { title, slug, status },
   });
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
   revalidatePath("/ml/blog");
-  return { success: true };
+  revalidatePath(`/blog/${slug}`);
+  revalidatePath(`/ml/blog/${slug}`);
+  return { success: true, slug };
 }
 
 export async function toggleBlogPostStatusAction(id: string, status: "published" | "draft") {
   const session = await requireAdminSession();
   const adminClient = createAdminClient();
+
+  const { data: existing } = await adminClient.from("blog_posts").select("slug").eq("id", id).single();
+  const postSlug = existing?.slug;
 
   const payload: {
     status: "draft" | "published" | "archived";
@@ -1201,11 +1223,16 @@ export async function toggleBlogPostStatusAction(id: string, status: "published"
     action: `blog.${status}`,
     entityType: "blog_posts",
     entityId: id,
+    details: { slug: postSlug, status },
   });
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
   revalidatePath("/ml/blog");
+  if (postSlug) {
+    revalidatePath(`/blog/${postSlug}`);
+    revalidatePath(`/ml/blog/${postSlug}`);
+  }
   return { success: true };
 }
 
@@ -1218,6 +1245,9 @@ export async function deleteBlogPostAction(id: string) {
 
   const adminClient = createAdminClient();
 
+  const { data: existing } = await adminClient.from("blog_posts").select("slug").eq("id", id).single();
+  const postSlug = existing?.slug;
+
   const { error } = await adminClient.from("blog_posts").delete().eq("id", id);
   if (error) {
     return { success: false, error: "Failed to delete blog post." };
@@ -1228,11 +1258,16 @@ export async function deleteBlogPostAction(id: string) {
     action: "blog.delete",
     entityType: "blog_posts",
     entityId: id,
+    details: { slug: postSlug },
   });
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
   revalidatePath("/ml/blog");
+  if (postSlug) {
+    revalidatePath(`/blog/${postSlug}`);
+    revalidatePath(`/ml/blog/${postSlug}`);
+  }
   return { success: true };
 }
 
